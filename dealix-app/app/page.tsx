@@ -1,235 +1,129 @@
-'use client'
+'use client';
 
-import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { ActionCard } from "@/components/ActionCard";
+import { PageHeader } from "@/components/PageHeader";
+import { StatCard } from "@/components/StatCard";
+import { BuildCard } from "@/components/BuildCard";
+import { dealixStore, getDashboardMetrics, useDealiXData } from "@/lib/store";
 
-type Build = {
-  id: string;
-  name: string;
-  status: string;
-  buildCost: number;
-  salePrice?: number;
-  mercariPayout?: number;
-  netProfit?: number;
-  estimatedResale?: string;
-  projectedProfit?: string;
-  listingPrice?: number;
-  expectedSale?: string;
-};
+export default function HomePage() {
+  const snapshot = useDealiXData();
+  const metrics = getDashboardMetrics(snapshot);
+  const focusTasks = snapshot.tasks.filter((task) => !task.completed).slice(0, 4);
 
-export default function Home() {
-  const initialBuilds: Build[] = [
-    {
-      id: "1",
-      name: "i5-12600K + RTX 4060 Gaming PC",
-      status: "Sold",
-      buildCost: 614.5,
-      salePrice: 997.0,
-      mercariPayout: 859.0,
-      netProfit: 244.5,
-    },
-    {
-      id: "2",
-      name: "Legacy Powerhouse",
-      status: "Active",
-      buildCost: 365.5,
-      estimatedResale: "550-599",
-      projectedProfit: "134.5-204.5",
-    },
-    {
-      id: "3",
-      name: "Blue Titan",
-      status: "Listed",
-      buildCost: 715.0,
-      listingPrice: 999.0,
-      expectedSale: "925-975",
-      projectedProfit: "210-260",
-    },
-  ];
-
-  const [builds] = useState<Build[]>(initialBuilds);
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
-
-  const [actions, setActions] = useState(
-    () => {
-      // initialize actions (kept client-only)
-      const list = [
-        { id: "a1", text: "Review Blue Titan pricing", done: false },
-        { id: "a2", text: "Add missing final sale data for Legacy Powerhouse", done: false },
-        { id: "a3", text: "Enter current loose-parts inventory", done: false },
-        { id: "a4", text: "Confirm where the RTX 3070 from Build #1 went", done: false },
-      ];
-      try {
-        const raw = localStorage.getItem("dealiX_actions_v1");
-        if (raw) return JSON.parse(raw);
-      } catch (e) {
-        // ignore parse errors
-      }
-      return list;
-    }
-  );
-n  useEffect(() => {
-    try {
-      localStorage.setItem("dealiX_actions_v1", JSON.stringify(actions));
-    } catch (e) {
-      // ignore storage errors
-    }
-  }, [actions]);
-n  const toggleCollapse = (id: string) => {
-    setCollapsed((c) => ({ ...c, [id]: !c[id] }));
-  };
-n  const toggleAction = (id: string) => {
-    setActions((prev: any[]) => prev.map((a) => (a.id === id ? { ...a, done: !a.done } : a)));
-  };
-n  const stats = {
-    confirmedNetProfit: 244.5,
-    completedSales: 1,
-    activeBuilds: 2,
-    totalRecordedBuildCost: 1695.0, // 614.5 + 365.5 + 715.0
-  };
-n  const statusBadge = (s: string) => {
-    if (s === "Sold") return <span className="badge badge-sold">Sold</span>;
-    if (s === "Active") return <span className="badge badge-active">Active</span>;
-    if (s === "Listed") return <span className="badge badge-listed">Listed</span>;
-    return <span className="badge">{s}</span>;
+  const toggleTask = (id: string) => {
+    const task = snapshot.tasks.find((item) => item.id === id);
+    if (task) dealixStore.updateTask({ ...task, completed: !task.completed, status: task.completed ? "Open" : "Completed" });
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#060608] via-[#0b0b0c] to-[#050507] text-zinc-100 antialiased">
-      <main className="max-w-7xl mx-auto p-8">
-        <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mb-8">
-          <div className="w-full sm:w-2/3">
-            <h1 className="text-4xl font-extrabold tracking-tight">DealiX</h1>
-            <div className="mt-3 text-zinc-300 leading-relaxed text-base header-intro">
-              <p className="mb-3">Good morning, Tristen.</p>
-              <p className="mb-2">Here’s what’s happening with your PC flipping business today.</p>
-              <p className="mb-1">You currently have <strong>{stats.activeBuilds}</strong> active builds, <strong>{stats.completedSales}</strong> completed sale, and at least <strong>${stats.confirmedNetProfit.toFixed(2)}</strong> in confirmed profit from Build #1.</p>
-              <p className="mb-1">Blue Titan is still active and should be monitored for pricing. Legacy Powerhouse still needs final sale data. Your next goal is to organize inventory and track every part accurately.</p>
+    <div className="space-y-6">
+      <PageHeader
+        eyebrow="Morning briefing"
+        title={`Good morning, ${snapshot.settings.profileName} 👋`}
+        description="Your business is moving well. You have healthy momentum across profit, active builds, and deal follow-up."
+        action={
+          <div className="rounded-[24px] border border-sky-400/20 bg-sky-500/10 p-5 sm:min-w-[260px]">
+            <div className="text-xs uppercase tracking-[0.24em] text-sky-300">Today&apos;s Opportunity Score</div>
+            <div className="mt-3 text-3xl font-semibold text-white">82/100</div>
+            <div className="mt-2 text-sm text-zinc-400">Strong upside from current inventory and pricing opportunities.</div>
+          </div>
+        }
+      />
+
+      <div className="rounded-[28px] border border-amber-400/20 bg-amber-500/10 p-4 text-sm text-amber-200">
+        <div className="font-semibold">Legacy Powerhouse is blocked: compatible motherboard needed.</div>
+        <div className="mt-1 text-amber-300/90">This build is active and needs a motherboard compatible with the Intel Core i7-7700K before it can continue.</div>
+      </div>
+
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Confirmed Profit" value={`$${metrics.confirmedNetProfit.toFixed(2)}`} hint="Realized profit" icon="💰" accent="sky" />
+        <StatCard label="Completed Sales" value={`${metrics.completedSales}`} hint="Confirmed sales" icon="🧾" />
+        <StatCard label="Open Builds" value={`${metrics.openBuilds}`} hint={`${metrics.activeBuilds} active · ${metrics.listedBuilds} listed`} icon="🖥" accent="purple" />
+        <StatCard label="Total Recorded Build Cost" value={`$${metrics.totalRecordedBuildCost.toFixed(2)}`} hint="Recorded build spend" icon="📦" />
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+        <div className="space-y-6">
+          <div className="rounded-[28px] border border-white/10 bg-slate-950/40 p-6 shadow-[0_20px_60px_rgba(2,12,27,0.34)] backdrop-blur-xl">
+            <div className="mb-5 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-semibold text-white">Today&apos;s Focus</h2>
+                <p className="mt-1 text-sm text-zinc-400">Actionable priorities for the day.</p>
+              </div>
+              <div className="rounded-full border border-sky-400/20 bg-sky-500/10 px-3 py-1 text-sm font-medium text-sky-300">High priority</div>
+            </div>
+
+            <div className="space-y-3">
+              {focusTasks.map((task) => (
+                <label key={task.id} className="flex cursor-pointer items-center justify-between rounded-2xl border border-sky-400/20 bg-sky-500/10 px-4 py-3 text-zinc-200 transition-all duration-200 hover:border-sky-400/40">
+                  <span className="text-sm">{task.title}</span>
+                  <input type="checkbox" checked={task.completed} onChange={() => toggleTask(task.id)} className="h-4 w-4 rounded border-white/20 bg-transparent accent-sky-500" />
+                </label>
+              ))}
             </div>
           </div>
 
-          <div className="w-full sm:w-1/3 flex items-start sm:items-center justify-end gap-4">
-            <div className="grid grid-cols-2 sm:grid-cols-1 gap-3 w-full">
-              <div className="card card-compact flex flex-col p-3">
-                <div className="text-zinc-300 text-xs">Confirmed Net Profit</div>
-                <div className="mt-2 text-lg font-semibold">${stats.confirmedNetProfit.toFixed(2)}</div>
+          <div className="rounded-[28px] border border-white/10 bg-slate-950/40 p-6 shadow-[0_20px_60px_rgba(2,12,27,0.34)] backdrop-blur-xl">
+            <div className="mb-5 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-semibold text-white">Recent Builds</h2>
+                <p className="mt-1 text-sm text-zinc-400">Your current momentum and blockers.</p>
               </div>
-
-              <div className="card card-compact flex flex-col p-3">
-                <div className="text-zinc-300 text-xs">Completed Sales</div>
-                <div className="mt-2 text-lg font-semibold">{stats.completedSales}</div>
-              </div>
-
-              <div className="card card-compact flex flex-col p-3">
-                <div className="text-zinc-300 text-xs">Active Builds</div>
-                <div className="mt-2 text-lg font-semibold">{stats.activeBuilds}</div>
-              </div>
-
-              <div className="card card-compact flex flex-col p-3">
-                <div className="text-zinc-300 text-xs">Total Recorded Build Cost</div>
-                <div className="mt-2 text-lg font-semibold">${stats.totalRecordedBuildCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
-                <div className="mt-2 text-xs text-zinc-400">Breakdown: $614.50, $365.50, $715.00</div>
-              </div>
+              <Link href="/builds" className="text-sm font-medium text-sky-300 transition-colors hover:text-sky-200">View history</Link>
+            </div>
+            <div className="space-y-3">
+              {snapshot.builds.map((build) => (
+                <BuildCard key={build.id} build={build} />
+              ))}
             </div>
           </div>
-        </header>
+        </div>
 
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <div className="lg:col-span-2 space-y-4">
-            <div className="bg-zinc-800/40 p-6 rounded-xl">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold">Recent Builds</h2>
-                <div className="text-sm text-zinc-400">Showing 3 builds</div>
+        <div className="space-y-6">
+          <div className="rounded-[28px] border border-purple-400/20 bg-purple-500/10 p-6 shadow-[0_20px_60px_rgba(147,51,234,0.16)] backdrop-blur-xl">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-purple-300">AI Assistant</p>
+                <h2 className="mt-1 text-xl font-semibold text-white">What DealiX recommends</h2>
               </div>
-
-              <div className="space-y-3">
-                {builds.map((b) => {
-                  const isCollapsed = !!collapsed[b.id];
-                  return (
-                    <div key={b.id} className="p-4 bg-zinc-900/40 rounded-md flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 justify-between sm:justify-start">
-                          <div className="flex items-center gap-3">
-                            <div className="font-medium">{b.name}</div>
-                            <div>{statusBadge(b.status)}</div>
-                          </div>
-
-                          <div className="sm:ml-4">
-                            <button aria-expanded={!isCollapsed} onClick={() => toggleCollapse(b.id)} className="text-sm text-zinc-300 hover:underline">
-                              {isCollapsed ? "Show details" : "Hide details"}
-                            </button>
-                          </div>
-                        </div>
-
-                        {!isCollapsed && (
-                          <div className="mt-2 text-sm text-zinc-400">
-                            {b.status === "Sold" && (
-                              <>
-                                <div>Build cost: ${b.buildCost.toFixed(2)}</div>
-                                <div>Sale price: ${b.salePrice!.toFixed(2)}</div>
-                                <div>Mercari payout: ${b.mercariPayout!.toFixed(2)}</div>
-                                <div className="mt-1">Net profit: <strong>${b.netProfit!.toFixed(2)}</strong></div>
-                              </>
-                            )}
-
-                            {b.status === "Active" && (
-                              <>
-                                <div>Build cost: ${b.buildCost.toFixed(2)}</div>
-                                <div>Estimated resale: {b.estimatedResale}</div>
-                                <div>Projected profit: {b.projectedProfit}</div>
-                              </>
-                            )}
-
-                            {b.status === "Listed" && (
-                              <>
-                                <div>Build cost: ${b.buildCost.toFixed(2)}</div>
-                                <div>Listing price: ${b.listingPrice!.toFixed(2)}</div>
-                                <div>Expected sale price: {b.expectedSale}</div>
-                                <div>Projected profit: {b.projectedProfit}</div>
-                              </>
-                            )}
-                          </div>
-                        )}
-                      </div>
-n                      <div className="text-sm text-zinc-400 sm:text-right flex-shrink-0">
-                        {/* Right column can show compact summary */}
-                        {b.status === "Sold" && <div className="font-medium text-green-400">${b.netProfit!.toFixed(2)}</div>}
-                        {b.status !== "Sold" && <div className="text-zinc-300">Build cost: ${b.buildCost.toFixed(2)}</div>}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              <div className="rounded-full border border-purple-400/20 bg-slate-950/40 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-purple-300">Smart</div>
             </div>
-
-            <div className="bg-zinc-800/30 p-4 rounded-md">
-              <h3 className="text-md font-semibold mb-2">Today's Focus</h3>
-              <p className="text-sm text-zinc-300">Organize inventory, track every part accurately, and confirm final sale data for Legacy Powerhouse.</p>
-
-              <div className="mt-4">
-                <h4 className="text-sm font-medium mb-2">Recommended Actions</h4>
-                <ul className="list-none text-sm text-zinc-300 space-y-2">
-                  {actions.map((a: any) => (
-                    <li key={a.id} className={`flex items-center gap-3 ${a.done ? "opacity-60 line-through" : ""}`}>
-                      <input id={`act-${a.id}`} aria-checked={a.done} type="checkbox" checked={a.done} onChange={() => toggleAction(a.id)} className="w-4 h-4 rounded" />
-                      <label htmlFor={`act-${a.id}`} className="select-none">{a.text}</label>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+            <div className="mt-5 rounded-2xl border border-white/10 bg-slate-950/40 p-4">
+              <p className="text-sm leading-7 text-zinc-300">Blue Titan is currently priced slightly above the current market range. Legacy Powerhouse needs a compatible motherboard before it can move ahead. The best near-term move is to focus on testing and pricing before listing.</p>
+              <Link href="/ai" className="mt-4 inline-flex rounded-full bg-sky-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-sky-400">Open AI Assistant</Link>
             </div>
           </div>
 
-          <aside className="bg-zinc-800/40 p-6 rounded-xl">
-            <h3 className="text-lg font-semibold mb-3">Quick Summary</h3>
-            <div className="text-sm text-zinc-300 space-y-2">
-              <div>Confirmed Net Profit: <strong>${stats.confirmedNetProfit.toFixed(2)}</strong></div>
-              <div>Completed Sales: <strong>{stats.completedSales}</strong></div>
-              <div>Active Builds: <strong>{stats.activeBuilds}</strong></div>
-              <div>Total Recorded Build Cost: <strong>${stats.totalRecordedBuildCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}</strong></div>
+          <div className="rounded-[28px] border border-white/10 bg-slate-950/40 p-6 shadow-[0_20px_60px_rgba(2,12,27,0.34)] backdrop-blur-xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-white">Marketplace Activity</h2>
+              <span className="text-sm text-zinc-500">Demo placeholder</span>
             </div>
-          </aside>
-        </section>
-      </main>
+            <div className="space-y-3 text-sm text-zinc-300">
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-3">RTX 4060 deal looks promising if you can verify the card works.</div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-3">Blue Titan pricing still needs attention before it is listed more aggressively.</div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-3">A compatible motherboard search is now part of the Legacy Powerhouse workflow.</div>
+            </div>
+          </div>
+
+          <div className="rounded-[28px] border border-white/10 bg-slate-950/40 p-6 shadow-[0_20px_60px_rgba(2,12,27,0.34)] backdrop-blur-xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-white">Quick Actions</h2>
+              <span className="text-sm text-zinc-500">Fast lane</span>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
+              <ActionCard title="Find Deals" description="Open the mock deal finder" href="/deals" accent="sky" />
+              <ActionCard title="Add Build" description="Review and manage builds" href="/builds" />
+              <ActionCard title="Add Inventory" description="Track parts and components" href="/inventory" />
+              <ActionCard title="Open Tasks" description="Manage active work" href="/tasks" />
+              <ActionCard title="Open Notifications" description="Review alerts and reminders" href="/notifications" />
+              <ActionCard title="Find Motherboard" description="Check compatibility for Legacy Powerhouse" href="/motherboard-finder" accent="purple" />
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

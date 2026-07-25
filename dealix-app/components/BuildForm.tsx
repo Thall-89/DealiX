@@ -1,0 +1,29 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import type { Build } from "@/types";
+
+interface BuildFormProps { initial?: Build; onSave: (build: Build) => void; onCancel: () => void; }
+
+function blankBuild(): Build {
+  const id = `build-${crypto.randomUUID()}`;
+  return { id, slug: id, name: "", status: "Active", buildCost: 0, cpu: "", gpu: "", motherboard: "", ram: "", storage: "", psu: "", case: "", cooling: "", os: "", listingPrice: 0, marketplace: "", mercariPayout: 0, netProfit: 0, notes: "", partsNeeded: [], health: "Not assessed" };
+}
+
+export function BuildForm({ initial, onSave, onCancel }: BuildFormProps) {
+  const [draft, setDraft] = useState<Build>(() => structuredClone(initial ?? blankBuild()));
+  const [missingName, setMissingName] = useState("");
+  const [missingDetails, setMissingDetails] = useState("");
+  const [dirty, setDirty] = useState(false);
+  const update = <K extends keyof Build>(key: K, value: Build[K]) => { setDraft((current) => ({ ...current, [key]: value })); setDirty(true); };
+  useEffect(() => { const warn = (event: BeforeUnloadEvent) => { if (dirty) event.preventDefault(); }; window.addEventListener("beforeunload", warn); return () => window.removeEventListener("beforeunload", warn); }, [dirty]);
+  const save = () => { const name = draft.name.trim(); if (!name) return; onSave({ ...draft, name, slug: draft.slug === draft.id ? name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || draft.id : draft.slug }); };
+  const cancel = () => { if (!dirty || window.confirm("Discard unsaved build changes?")) onCancel(); };
+  return <div className="rounded-[28px] border border-white/10 bg-slate-950/60 p-6 shadow-[0_20px_60px_rgba(2,12,27,0.34)] backdrop-blur-xl"><div className="grid gap-3 md:grid-cols-2">
+    {[['Name','name'],['Start date','startDate'],['Completion date','completionDate'],['Listing date','listingDate'],['Sale date','saleDate'],['CPU','cpu'],['GPU','gpu'],['Motherboard','motherboard'],['RAM','ram'],['Storage','storage'],['PSU','psu'],['Case','case'],['Cooling','cooling'],['Operating system','os'],['Marketplace','marketplace']].map(([label,key]) => <label key={key} className="rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-zinc-300"><span className="text-xs uppercase tracking-[0.18em] text-zinc-500">{label}</span><input value={String(draft[key as keyof Build] ?? "")} onChange={(event) => update(key as keyof Build, event.target.value as never)} className="mt-2 w-full bg-transparent text-white outline-none" /></label>)}
+    <label className="rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-zinc-300"><span className="text-xs uppercase tracking-[0.18em] text-zinc-500">Status</span><select value={draft.status} onChange={(event) => update("status", event.target.value as Build["status"])} className="mt-2 w-full bg-transparent text-white outline-none"><option className="bg-slate-900">Active</option><option className="bg-slate-900">Listed</option><option className="bg-slate-900">Sold</option></select></label>
+    {[['Build cost','buildCost'],['Listing price','listingPrice'],['Payout','mercariPayout'],['Net profit','netProfit']].map(([label,key]) => <label key={key} className="rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-zinc-300"><span className="text-xs uppercase tracking-[0.18em] text-zinc-500">{label}</span><input type="number" min="0" value={Number(draft[key as keyof Build] ?? 0)} onChange={(event) => update(key as keyof Build, Number(event.target.value) as never)} className="mt-2 w-full bg-transparent text-white outline-none" /></label>)}
+  </div><label className="mt-3 block rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-zinc-300"><span className="text-xs uppercase tracking-[0.18em] text-zinc-500">Notes</span><textarea value={draft.notes ?? ""} onChange={(event) => update("notes", event.target.value)} className="mt-2 min-h-24 w-full bg-transparent text-white outline-none" /></label>
+  <div className="mt-4 rounded-2xl border border-amber-400/20 bg-amber-500/10 p-4"><div className="font-medium text-amber-100">Missing parts</div><div className="mt-3 grid gap-2 md:grid-cols-[1fr_1fr_auto]"><input value={missingName} onChange={(event) => setMissingName(event.target.value)} placeholder="Part name" className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2 text-sm text-white outline-none" /><input value={missingDetails} onChange={(event) => setMissingDetails(event.target.value)} placeholder="Why it is needed" className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2 text-sm text-white outline-none" /><button onClick={() => { if (missingName.trim()) { update("partsNeeded", [...(draft.partsNeeded ?? []), { name: missingName.trim(), priority: "High", status: "Needed", details: missingDetails.trim() || "Required to complete this build." }]); setMissingName(""); setMissingDetails(""); } }} type="button" className="rounded-full border border-amber-300/30 px-4 py-2 text-sm text-amber-100">Add missing part</button></div><div className="mt-3 flex flex-wrap gap-2">{draft.partsNeeded?.map((part) => <button key={part.name} type="button" onClick={() => update("partsNeeded", draft.partsNeeded?.filter((item) => item.name !== part.name))} className="rounded-full border border-amber-300/30 px-3 py-1 text-xs text-amber-100">{part.name} ×</button>)}</div></div>
+  <div className="mt-5 flex flex-wrap items-center gap-3"><button type="button" onClick={save} disabled={!draft.name.trim()} className="rounded-full bg-sky-500 px-4 py-2 text-sm font-medium text-white disabled:opacity-50">Save Build</button><button type="button" onClick={cancel} className="rounded-full border border-white/10 px-4 py-2 text-sm text-zinc-300">Cancel</button>{dirty ? <span className="text-sm text-amber-300">Unsaved changes</span> : null}</div></div>;
+}

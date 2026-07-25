@@ -1,54 +1,34 @@
 @import "tailwindcss";
 
 :root {
-  --background: #050507;
-  --foreground: #e6e6e8;
-  --muted: #9ca3af;
-  --card: rgba(255,255,255,0.03);
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    --background: #f7f7f8;
-    --foreground: #111827;
-    --muted: #6b7280;
-    --card: rgba(0,0,0,0.03);
-  }
+  --background: #05070d;
+  --foreground: #f4f7ff;
+  --muted: #8a93aa;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Card base style used by the dashboard */
-.card {
-  background: var(--card);
-  padding: 1rem;
-  border-radius: 0.75rem;
-  box-shadow: 0 1px 0 rgba(255,255,255,0.02) inset, 0 6px 18px rgba(2,6,23,0.6);
+::selection {
+  background: rgba(56, 189, 248, 0.3);
+  color: white;
 }
 
-/* Compact variant for stat cards */
-.card-compact { padding: 0.6rem; border-radius: 0.5rem; }
+::-webkit-scrollbar {
+  height: 10px;
+  width: 10px;
+}
 
-/* Badge helpers */
-.badge { display:inline-block; padding:0.15rem 0.5rem; border-radius:999px; font-size:0.75rem; font-weight:600; }
-.badge-sold { background: rgba(34,197,94,0.95); color: #000; }
-.badge-active { background: rgba(250,204,21,0.95); color: #000; }
-.badge-listed { background: rgba(56,189,248,0.95); color: #000; }
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+}
 
-/* Greeting tweaks */
-.header-intro p { margin-bottom: 0.5rem; }
-
-/* Utility tweaks */
-.text-zinc-400 { color: var(--muted); }
-
-/* Scrollbar for wide lists */
-::-webkit-scrollbar { height: 10px; width: 10px; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 10px; }
-::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-track {
+  background: transparent;
+}

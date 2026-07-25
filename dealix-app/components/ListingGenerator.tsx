@@ -1,0 +1,18 @@
+"use client";
+
+import { useState } from "react";
+import { generateListing } from "@/lib/listingGenerator";
+import { dealixStore } from "@/lib/store";
+import type { Build, ListingDraft, ListingMarketplace } from "@/types";
+
+const marketplaces: ListingMarketplace[] = ["Facebook Marketplace", "eBay", "Mercari", "Jawa", "Craigslist"];
+
+export function ListingGenerator({ build, onSaved }: { build: Build; onSaved: (build: Build) => void }) {
+  const [marketplace, setMarketplace] = useState<ListingMarketplace>("Facebook Marketplace");
+  const [draft, setDraft] = useState<ListingDraft | null>(build.listingDrafts?.find((item) => item.marketplace === "Facebook Marketplace") ?? null);
+  const [message, setMessage] = useState("");
+  const generate = () => { const listing = generateListing(build, marketplace); setDraft({ id: draft?.id ?? crypto.randomUUID(), marketplace, ...listing, updatedAt: new Date().toISOString() }); setMessage("Listing generated from the saved build data. Review it before publishing."); };
+  const save = () => { if (!draft) return; const next = { ...build, listingDrafts: [...(build.listingDrafts ?? []).filter((item) => item.marketplace !== marketplace), draft] }; dealixStore.updateBuild(next); onSaved(next); setMessage("Listing draft saved in this browser."); };
+  const copy = async () => { if (!draft) return; await navigator.clipboard.writeText(draft.content); setMessage("Listing copied to your clipboard."); };
+  return <div className="rounded-[28px] border border-purple-400/20 bg-purple-500/10 p-6 shadow-[0_20px_60px_rgba(147,51,234,0.16)]"><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><div className="text-sm font-medium text-purple-300">AI Listing Generator</div><h2 className="mt-1 text-xl font-semibold text-white">Professional listing draft</h2><p className="mt-1 text-sm text-zinc-400">Uses saved build information only. It does not invent specifications or pricing.</p></div><select value={marketplace} onChange={(event) => { const next = event.target.value as ListingMarketplace; setMarketplace(next); setDraft(build.listingDrafts?.find((item) => item.marketplace === next) ?? null); }} className="rounded-full border border-white/10 bg-slate-950/50 px-4 py-2 text-sm text-white outline-none">{marketplaces.map((item) => <option key={item} className="bg-slate-900">{item}</option>)}</select></div><div className="mt-4 flex flex-wrap gap-2"><button onClick={generate} className="rounded-full bg-sky-500 px-4 py-2 text-sm font-medium text-white">{draft ? "Regenerate" : "Generate Listing"}</button>{draft ? <><button onClick={copy} className="rounded-full border border-white/10 px-4 py-2 text-sm text-zinc-200">Copy Listing</button><button onClick={save} className="rounded-full border border-purple-300/30 px-4 py-2 text-sm text-purple-100">Save Listing Draft</button></> : null}</div>{draft ? <div className="mt-4"><label className="text-sm font-medium text-zinc-200">Professional title<input value={draft.title} onChange={(event) => setDraft({ ...draft, title: event.target.value })} className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/50 px-4 py-3 text-white outline-none" /></label><label className="mt-3 block text-sm font-medium text-zinc-200">Edit before copy<textarea value={draft.content} onChange={(event) => setDraft({ ...draft, content: event.target.value })} className="mt-2 min-h-96 w-full rounded-2xl border border-white/10 bg-slate-950/50 p-4 font-mono text-sm leading-6 text-zinc-200 outline-none" /></label></div> : null}{message ? <div className="mt-4 text-sm font-medium text-emerald-300">{message}</div> : null}</div>;
+}
