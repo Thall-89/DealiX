@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { navItems } from "@/lib/mockData";
 import { getDashboardMetrics, useDealiXData } from "@/lib/store";
@@ -14,25 +15,14 @@ export function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
   const pathname = usePathname();
   const metrics = getDashboardMetrics(useDealiXData());
 
-  const links = [
-    ...navItems,
-    { href: "/tasks", label: "Tasks" },
-    { href: "/notifications", label: "Notifications" },
-    { href: "/motherboard-finder", label: "Motherboard Finder" },
-  ];
+  const links = navItems;
 
   return (
     <aside className={`w-full shrink-0 rounded-[28px] border border-white/10 bg-slate-950/60 p-4 shadow-[0_24px_80px_rgba(2,12,27,0.38)] backdrop-blur-xl lg:w-72 lg:p-5 ${mobileOpen ? "block" : "hidden lg:block"}`}>
-      <div className="mb-6 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-500/15 text-lg text-sky-300">D</div>
-          <div>
-            <div className="text-lg font-semibold text-white">DealiX</div>
-            <div className="text-sm text-zinc-500">Operations OS</div>
-          </div>
-        </div>
+      <div className="mb-7 flex min-h-12 items-center justify-between gap-3">
+        <Image src="/brand/dealix-logo-dark.svg" alt="DealiX" width={156} height={29} priority className="h-auto w-[156px] max-w-full object-contain object-left" />
         {onClose ? (
-          <button onClick={onClose} className="rounded-full border border-white/10 p-2 text-zinc-400 lg:hidden">
+          <button aria-label="Close navigation" onClick={onClose} className="min-h-10 rounded-full border border-white/10 px-3 text-zinc-400 transition hover:border-white/20 hover:text-white active:scale-[0.98] lg:hidden">
             ×
           </button>
         ) : null}

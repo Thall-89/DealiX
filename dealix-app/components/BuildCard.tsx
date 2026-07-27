@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { StatusBadge } from "@/components/StatusBadge";
+import { BuildHealthCard } from "@/components/BuildHealthCard";
+import { useDealiXData } from "@/lib/store";
 import type { Build } from "@/types";
 
 interface BuildCardProps {
@@ -7,6 +9,7 @@ interface BuildCardProps {
 }
 
 export function BuildCard({ build }: BuildCardProps) {
+  const { tasks, testingResults } = useDealiXData();
   return (
     <div className="rounded-[24px] border border-white/10 bg-white/5 p-5 shadow-[0_20px_60px_rgba(2,12,27,0.34)] backdrop-blur-xl">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -26,6 +29,7 @@ export function BuildCard({ build }: BuildCardProps) {
               {build.partsNeeded[0].name} • {build.partsNeeded[0].status}
             </div>
           ) : null}
+          <div className="mt-3"><BuildHealthCard build={build} tasks={tasks} testing={testingResults[build.id]} compact /></div>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link href={`/builds/${build.slug}`} className="rounded-full border border-white/10 px-3 py-2 text-sm text-zinc-300 transition hover:border-sky-400/30 hover:text-sky-200">

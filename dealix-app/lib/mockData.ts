@@ -1,11 +1,11 @@
-import type { AiMessage, Build, Deal, InventoryItem, NotificationItem, TaskItem, TestingChecklistItem } from "@/types";
+import type { AiMessage, Build, Deal, DealOpportunity, InventoryItem, MarketplaceListing, NotificationItem, SavedDealSearch, TaskItem, TestingChecklistItem } from "@/types";
 
 export const navItems = [
   { href: "/", label: "Dashboard" },
   { href: "/builds", label: "Builds" },
   { href: "/inventory", label: "Inventory" },
-  { href: "/deals", label: "Deal Finder" },
-  { href: "/testing", label: "Testing" },
+  { href: "/deals", label: "Market Intelligence" },
+  { href: "/planner", label: "AI Build Planner" },
   { href: "/sales", label: "Sales" },
   { href: "/analytics", label: "Analytics" },
   { href: "/ai", label: "AI Assistant" },
@@ -13,7 +13,7 @@ export const navItems = [
 ];
 
 export const dashboardStats = {
-  confirmedNetProfit: 244.5,
+  confirmedNetProfit: 244.73,
   completedSales: 1,
   activeBuilds: 2,
   totalRecordedBuildCost: 1695.0,
@@ -26,9 +26,9 @@ export const builds: Build[] = [
     name: "i5-12600K + RTX 4060 Gaming PC",
     status: "Sold",
     buildCost: 614.5,
-    salePrice: 997.0,
-    mercariPayout: 859.0,
-    netProfit: 244.5,
+    salePrice: 997.5,
+    mercariPayout: 859.23,
+    netProfit: 244.73,
     cpu: "Intel Core i5-12600K",
     gpu: "MSI RTX 4060 Ventus 2X OC 8GB",
     ram: "32GB DDR4",
@@ -38,12 +38,12 @@ export const builds: Build[] = [
     windowsActivation: "Activated",
     accessories: "USB Wi-Fi adapter, extra fan, RGB controller",
     workCompleted: ["cleaned", "upgraded", "cable managed", "stress tested"],
-    startDate: "2025-03-12",
-    completionDate: "2025-03-14",
-    listingDate: "2025-03-16",
-    saleDate: "2025-03-22",
-    lastUpdated: "2025-03-22",
-    notes: "Sold quickly after a clean listing and strong photos.",
+    startDate: "2026-06-01",
+    completionDate: "2026-07-10",
+    listingDate: "2026-07-12",
+    saleDate: "2026-07-24",
+    lastUpdated: "2026-07-24",
+    notes: "Cleaned, upgraded, cable managed, and stress tested.",
     parts: [
       { name: "Intel Core i5-12600K", type: "CPU", condition: "Excellent", serialNumber: "CPU-12600K-01", purchasePrice: 249, seller: "Micro Center", purchaseDate: "2025-03-01", warranty: "No warranty", assignedBuild: "i5-12600K + RTX 4060 Gaming PC", currentLocation: "Desk", notes: "No issues observed." },
       { name: "MSI RTX 4060 Ventus 2X OC 8GB", type: "GPU", condition: "Good", serialNumber: "GPU-4060-01", purchasePrice: 199, seller: "eBay", purchaseDate: "2025-03-02", warranty: "30-day seller warranty", assignedBuild: "i5-12600K + RTX 4060 Gaming PC", currentLocation: "Build station", notes: "Tested and passing." },
@@ -61,7 +61,7 @@ export const builds: Build[] = [
     ],
     photos: { mainPhoto: "Placeholder", insideCase: "Placeholder", gpu: "Placeholder", cableManagement: "Placeholder", benchmarkScreenshot: "Placeholder", windowsScreenshot: "Placeholder" },
     benchmarking: { cinebench: "Not entered", threeDMark: "Not entered", crystalDiskMark: "Not entered", cpuIdleTemp: "35°C", cpuLoadTemp: "72°C", gpuIdleTemp: "35°C", gpuLoadTemp: "73°C", status: "Pass", notes: "Benchmarking notes pending." },
-    profitBreakdown: { salePrice: 997, marketplaceFees: 0, shipping: 0, taxes: 0, buildCost: 614.5, payout: 859, netProfit: 244.5, roi: "39.7%", profitMargin: "24.5%", marketplace: "Mercari", acceptedOffer: "Yes", listingPrice: 999 },
+    profitBreakdown: { salePrice: 997.5, marketplaceFees: 99.75, shipping: 38.52, taxes: 0, buildCost: 614.5, payout: 859.23, netProfit: 244.73, roi: "39.83%", profitMargin: "24.53%", marketplace: "Mercari", acceptedOffer: "Yes", listingPrice: 999 },
   },
   {
     id: "build-2",
@@ -170,13 +170,16 @@ export const inventoryItems: InventoryItem[] = [
     name: "RTX 3070 Founders Edition",
     category: "GPU",
     brandModel: "NVIDIA RTX 3070 FE",
-    purchaseCost: 285.0,
+    purchaseCost: 224.0,
     condition: "Good",
     testingStatus: "Needs Testing",
-    currentStatus: "Available",
-    storageLocation: "Garage shelf B",
+    currentStatus: "Installed in Personal PC",
+    availability: "Unavailable",
+    personalPc: true,
+    storageLocation: "Installed in Main PC",
     slug: "rtx-3070-founders-edition",
-    locationNote: "Current location still needs confirmation.",
+    locationNote: "Current location confirmed: Main PC. This asset is not available for DealiX builds.",
+    assetHistory: [{ action: "Purchased", note: "Acquired for GPU swap." }, { action: "Installed in Main PC", note: "Current location confirmed." }],
   },
   {
     id: "part-2",
@@ -227,6 +230,20 @@ export const inventoryItems: InventoryItem[] = [
     storageLocation: "Garage shelf A",
     slug: "montech-xr-black-case",
   },
+  { id: "asset-3060ti", slug: "asus-rtx-3060-ti", name: "ASUS RTX 3060 Ti 8GB", category: "GPU", brandModel: "ASUS RTX 3060 Ti 8GB", purchaseCost: 0, condition: "Not entered", testingStatus: "Passed", currentStatus: "Assigned to Build", availability: "Unavailable", storageLocation: "Installed in Build", assignedBuild: "Blue Titan", assetHistory: [{ action: "Assigned to build", note: "Installed in Blue Titan." }] },
+  { id: "asset-gtx1080", slug: "nvidia-gtx-1080", name: "NVIDIA GeForce GTX 1080", category: "GPU", brandModel: "NVIDIA GeForce GTX 1080", purchaseCost: 0, condition: "Not entered", testingStatus: "Unknown", currentStatus: "Assigned to Build", availability: "Unavailable", storageLocation: "Installed in Build", assignedBuild: "Legacy Powerhouse", assetHistory: [{ action: "Assigned to build", note: "Installed in Legacy Powerhouse." }] },
+  { id: "asset-1050ti", slug: "nvidia-gtx-1050-ti", name: "NVIDIA GeForce GTX 1050 Ti", category: "GPU", brandModel: "Not entered", purchaseCost: 0, condition: "Not entered", testingStatus: "Unknown", currentStatus: "Available", availability: "Available", storageLocation: "Available Inventory" },
+  { id: "asset-rx580", slug: "amd-radeon-rx-580", name: "AMD Radeon RX 580", category: "GPU", brandModel: "Not entered", purchaseCost: 0, condition: "Not entered", testingStatus: "Unknown", currentStatus: "Available", availability: "Available", storageLocation: "Available Inventory" },
+  { id: "asset-darkflash", slug: "darkflash-dn360d-aio", name: "darkFlash DN360D 360mm AIO Liquid Cooler", category: "CPU Cooler", brandModel: "360mm AIO Liquid Cooler with 2.1-inch LCD", purchaseCost: 0, condition: "Not entered", testingStatus: "Unknown", currentStatus: "Available", availability: "Available", storageLocation: "Unknown", notes: "Socket compatibility and mounting hardware need verification." },
+  { id: "asset-rise-mode", slug: "rise-mode-argb-air-cooler", name: "Winter Cooler Rise Mode ARGB Air Cooler", category: "CPU Cooler", brandModel: "ARGB Air Cooler", purchaseCost: 0, condition: "Not entered", testingStatus: "Unknown", currentStatus: "Available", availability: "Available", storageLocation: "Unknown", notes: "Socket compatibility and mounting hardware need verification." },
+  { id: "asset-evga-650", slug: "evga-650w-bronze-psu", name: "EVGA 650W 80+ Bronze PSU", category: "Power Supply", brandModel: "EVGA 650W 80+ Bronze", purchaseCost: 0, condition: "Not entered", testingStatus: "Unknown", currentStatus: "Needs Parts", availability: "Restricted", storageLocation: "Unknown", notes: "Missing modular cables. Verify exact PSU model; never use random modular cables." },
+  ...Array.from({ length: 6 }, (_, index) => ({ id: `asset-rs120-${index + 1}`, slug: `rs120-argb-fan-${index + 1}`, name: `RS120 ARGB 120mm PWM Fan ${index + 1}`, category: "Case Fan", brandModel: "RS120 ARGB 120mm PWM Fans, Revival Series", purchaseCost: 0, condition: "Not entered", testingStatus: "Unknown", currentStatus: "Available", availability: "Available" as const, storageLocation: "Unknown", notes: `Original pack grouping: ${index < 3 ? "Pack 1" : "Pack 2"}.` })),
+];
+
+export const seedListings: MarketplaceListing[] = [
+  { id: "listing-blue-fb", buildId: "build-3", marketplace: "Facebook Marketplace", title: "Blue Titan", price: 999, status: "Active", lastUpdated: "2026-07-25", priceHistory: [{ price: 999, date: "2026-07-25", note: "Seed listing record" }] },
+  { id: "listing-blue-ebay", buildId: "build-3", marketplace: "eBay", title: "Blue Titan", price: 1099, status: "Active", lastUpdated: "2026-07-25", priceHistory: [{ price: 1099, date: "2026-07-25", note: "Seed listing record" }] },
+  { id: "listing-blue-mercari", buildId: "build-3", marketplace: "Mercari", title: "Blue Titan", status: "Needs Price Confirmation", lastUpdated: "2026-07-25", notes: "Mercari listing price needs confirmation. Enter the exact current listing price." },
 ];
 
 export const deals: Deal[] = [
@@ -277,7 +294,7 @@ export const deals: Deal[] = [
   },
   {
     id: "deal-4",
-    marketplace: "Demo Search",
+    marketplace: "Recently Discovered",
     title: "Compatible Legacy Powerhouse motherboard",
     listingPrice: 95.0,
     estimatedMarketValue: 125.0,
@@ -430,3 +447,15 @@ export const settingsDefaults = {
   minimumTargetProfit: 100,
   preferredParts: ["RTX 4060", "RTX 3060 Ti", "Ryzen 5", "white cases"],
 };
+
+const dealSeedDate = "2026-07-25T12:00:00.000Z";
+const defaultSearchRows: Array<[string, string, string, string?, string?]> = [
+  ["RTX 4060 Ti below target", "GPU", "RTX 4060 Ti", "NVIDIA", "RTX 40-series"], ["RTX 4060 below target", "GPU", "RTX 4060", "NVIDIA", "RTX 40-series"], ["RTX 3070 below target", "GPU", "RTX 3070", "NVIDIA", "RTX 30-series"], ["RTX 3060 Ti below target", "GPU", "RTX 3060 Ti", "NVIDIA", "RTX 30-series"], ["AM4 gaming PC opportunities", "Complete PC", "AM4 gaming PC", undefined, undefined], ["AM5 gaming PC opportunities", "Complete PC", "AM5 gaming PC", undefined, undefined], ["Legacy Powerhouse motherboard", "Motherboard", "LGA1151 motherboard", undefined, undefined], ["Blue Titan recreation parts", "GPU", "Blue Titan GPU", "NVIDIA", "RTX 40-series"], ["Used Ryzen 5 bundles", "CPU Bundle", "Ryzen 5 bundle", undefined, undefined], ["Used RTX 30-series GPUs", "GPU", "RTX 30-series", "NVIDIA", "RTX 30-series"], ["Used RTX 40-series GPUs", "GPU", "RTX 40-series", "NVIDIA", "RTX 40-series"],
+];
+export const savedDealSearches: SavedDealSearch[] = defaultSearchRows.map(([name, category, terms, gpuManufacturer, gpuGeneration], index) => ({ id: `saved-search-${index + 1}`, name, category, terms, marketplace: "All", condition: "Used", returnsRequired: false, fulfillment: "Any", gpuManufacturer, gpuGeneration, excludeLaptopGpu: category === "GPU", excludeAccessories: category === "GPU", allowForParts: false, requireAllRules: true, riskThreshold: "High", notificationEnabled: true, active: true, lastChecked: dealSeedDate, lastResultCount: 0, createdAt: dealSeedDate, updatedAt: dealSeedDate }));
+
+export const dealOpportunities: DealOpportunity[] = [
+  { id: "opportunity-legacy-board", title: "Gigabyte Z270 Gaming K3 LGA1151 DDR4 motherboard", marketplace: "Recently Discovered", listingType: "Part", category: "Motherboard", sourceType: "Mock", askingPrice: 80, condition: "Used", sellerName: "Sample seller", sellerRating: 4.9, returnPolicy: "Returns accepted", offersEnabled: true, location: "Local listing", dateFound: dealSeedDate, lastChecked: dealSeedDate, compatibleBuildIds: ["build-2"], missingPartCompleted: "Legacy Powerhouse", compatibility: "Compatible", compatibilityExplanation: "Sample candidate supports LGA1151, 7th-gen Intel, and DDR4. Confirm listing details before buying.", testingStatus: "Untested" },
+  { id: "opportunity-rtx4060", title: "GeForce RTX4060TI graphics card", marketplace: "Recently Discovered", listingType: "Part", category: "GPU", sourceType: "Mock", askingPrice: 260, shipping: 12, condition: "Used", sellerRating: 4.8, returnPolicy: "Returns accepted", offersEnabled: true, dateFound: dealSeedDate, lastChecked: dealSeedDate, estimatedResaleValue: 320, estimatedSellingFees: 32, estimatedSellerShipping: 18, compatibility: "Unknown", testingStatus: "Untested" },
+  { id: "opportunity-am4", title: "Ryzen 5 AM4 gaming PC bundle", marketplace: "Recently Discovered", listingType: "Complete PC", category: "Complete PC", sourceType: "Mock", askingPrice: 300, travelCost: 15, condition: "Used", sellerRating: 4.6, returnPolicy: "No returns", offersEnabled: true, location: "Local listing", dateFound: dealSeedDate, lastChecked: dealSeedDate, compatibility: "Compatible with Warning", compatibilityExplanation: "AMD AM4 is aligned with your stated preference, but components need verification.", testingStatus: "Untested" },
+];

@@ -1,0 +1,10 @@
+import Link from "next/link";
+import type { Build, TaskItem, TestingResult } from "@/types";
+import { analyzeBuildHealth } from "@/lib/buildHealth";
+
+export function BuildHealthCard({ build, tasks, testing, compact = false }: { build: Build; tasks: TaskItem[]; testing?: TestingResult; compact?: boolean }) {
+  const health = analyzeBuildHealth(build, tasks, testing);
+  const tone = health.state === "Ready" ? "border-emerald-400/20 bg-emerald-500/10 text-emerald-200" : health.state === "Blocked" ? "border-rose-400/20 bg-rose-500/10 text-rose-100" : health.state === "Needs attention" ? "border-amber-400/20 bg-amber-500/10 text-amber-100" : "border-sky-400/20 bg-sky-500/10 text-sky-100";
+  const scoreTone = health.state === "Ready" ? "text-emerald-300" : health.state === "Blocked" ? "text-rose-300" : health.state === "Needs attention" ? "text-amber-200" : "text-sky-200";
+  return <section className={`rounded-2xl border p-4 ${tone}`}><div className="flex items-start justify-between gap-4"><div><div className="text-xs font-medium uppercase tracking-[0.18em] opacity-75">Build health</div><div className="mt-1 font-semibold text-white">{health.headline}</div></div><div className={`text-right ${scoreTone}`}><div className="text-2xl font-semibold leading-none">{health.score}</div><div className="mt-1 text-[10px] font-medium uppercase tracking-[0.16em]">{health.state}</div></div></div>{compact ? <p className="mt-3 text-sm leading-6">Next: {health.nextStep}</p> : <><p className="mt-3 text-sm leading-6">Next: {health.nextStep}</p><ul className="mt-3 space-y-1.5 text-sm opacity-90">{health.reasons.slice(0, 3).map((reason) => <li key={reason}>• {reason}</li>)}</ul><div className="mt-4 flex flex-wrap gap-3 text-xs font-medium"><Link href="/testing" className="text-white underline decoration-white/30 underline-offset-4 hover:decoration-white">Testing</Link><Link href="/tasks" className="text-white underline decoration-white/30 underline-offset-4 hover:decoration-white">Linked tasks</Link></div></>}</section>;
+}

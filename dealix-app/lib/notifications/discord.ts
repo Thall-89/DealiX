@@ -1,0 +1,6 @@
+import "server-only";
+import type { NotificationConnectionStatus } from "@/lib/notifications/types";
+const safe = (value: string) => value.replace(/[\u0000-\u001F\u007F@`]/g, "").slice(0, 1000);
+function webhookUrl() { const value = process.env.DISCORD_WEBHOOK_URL; if (!value) throw new Error("Discord is not configured."); const url = new URL(value); if (url.protocol !== "https:" || !["discord.com", "discordapp.com"].includes(url.hostname) || !url.pathname.startsWith("/api/webhooks/")) throw new Error("Discord webhook configuration is invalid."); return url; }
+export function discordStatus(): NotificationConnectionStatus { try { webhookUrl(); return { configured: true, status: "Connected" }; } catch { return { configured: false, status: "Not Configured" }; } }
+export async function sendDiscordTestAlert() { const url = webhookUrl(); const response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ allowed_mentions: { parse: [] }, embeds: [{ title: "DealiX connection test", description: safe("Discord notifications are connected. This test does not contain marketplace data."), color: 0x38bdf8 }] }), signal: AbortSignal.timeout(10_000), cache: "no-store" }); if (!response.ok) throw new Error("Discord test alert failed."); }

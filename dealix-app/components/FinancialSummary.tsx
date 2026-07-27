@@ -1,0 +1,8 @@
+import { financialSummary } from "@/lib/financials";
+import type { Build } from "@/types";
+
+export function FinancialSummary({ builds }: { builds: Build[] }) {
+  const summary = financialSummary(builds);
+  const items = [["Confirmed Net Profit", `$${summary.confirmedProfit.toFixed(2)}`, "Confirmed"], ["Confirmed Payouts", `$${summary.confirmedPayouts.toFixed(2)}`, "Cash recovered"], ["Money Tied Up", `$${summary.moneyTiedUp.toFixed(2)}`, "Open-build investment"], ["Recorded Build Spending", `$${summary.recordedSpending.toFixed(2)}`, "Not inventory value"], ["Marketplace Fees Paid", `$${summary.marketplaceFees.toFixed(2)}`, "Confirmed deductions"], ["Shipping Paid", `$${summary.shippingPaid.toFixed(2)}`, "Confirmed deductions"], ["Projected Open-Build Profit", `$${summary.projectedLow.toFixed(2)} – $${summary.projectedHigh.toFixed(2)}`, summary.hasIncompleteProjection ? "Incomplete projection" : "Projected"]];
+  return <section className="rounded-[28px] border border-emerald-400/20 bg-emerald-500/10 p-6 shadow-[0_20px_60px_rgba(16,185,129,0.12)]"><div><p className="text-sm font-medium text-emerald-300">Earnings and cash flow</p><h2 className="mt-1 text-xl font-semibold text-white">Confirmed money stays separate from projections</h2></div><div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">{items.map(([label, value, hint]) => <div key={label} className="rounded-2xl border border-white/10 bg-slate-950/40 p-4"><div className="text-sm text-zinc-400">{label}</div><div className="mt-2 text-xl font-semibold text-white">{value}</div><div className="mt-1 text-xs text-zinc-500">{hint}</div></div>)}</div></section>;
+}

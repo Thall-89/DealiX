@@ -133,6 +133,43 @@ export interface InventoryItem {
   warranty?: string;
   notes?: string;
   slug?: string;
+  sourceTransactionId?: string;
+  allocatedCost?: number;
+  estimatedResaleValue?: number;
+  partSale?: { listingPrice?: number; acceptedSalePrice?: number; marketplace: string; sellingFee?: number; shipping?: number; otherExpenses?: number; payout?: number; payoutConfirmed: boolean; saleDate?: string; buyerNotes?: string; trackingNumber?: string; returnStatus?: "Not Returned" | "Refunded" | "Returned"; refundAmount?: number; notes?: string; status: "Not Listed" | "Listed" | "Offer Received" | "Pending Sale" | "Sold" | "Paid" | "Refunded" | "Returned" | "Cancelled" | "Archived" };
+  availability?: "Available" | "Unavailable" | "Restricted" | "Unknown";
+  personalPc?: boolean;
+  quantity?: number;
+  assetHistory?: Array<{ action: string; note?: string; date?: string }>;
+}
+
+export interface MarketplaceListing {
+  id: string;
+  buildId: string;
+  marketplace: string;
+  title: string;
+  price?: number;
+  status: "Draft" | "Active" | "Needs Price Confirmation" | "Offer Received" | "Pending Sale" | "Sold" | "Ended" | "Paused" | "Removed";
+  url?: string;
+  estimatedFee?: number;
+  sellerShipping?: number;
+  views?: number;
+  offers?: number;
+  bestOffer?: number;
+  lastUpdated: string;
+  notes?: string;
+  priceHistory?: Array<{ price?: number; date: string; note?: string }>;
+}
+
+export interface BuildTemplate {
+  id: string;
+  sourceBuildId: string;
+  name: string;
+  targetCost?: number;
+  targetResale?: number;
+  targetProfit?: number;
+  targetRoi?: number;
+  specifications: Pick<Build, "cpu" | "gpu" | "ram" | "storage" | "psu" | "case" | "cooling">;
 }
 
 export interface Deal {
@@ -163,6 +200,55 @@ export interface TestingChecklistItem {
   done: boolean;
 }
 
+export type DealSourceType = "Mock" | "Manual" | "Saved snapshot" | "Live";
+export type DealScoreLabel = "Excellent" | "Good" | "Fair" | "Poor";
+export type DealRiskLabel = "Low" | "Medium" | "High" | "Critical";
+export type DealCompatibilityLabel = "Compatible" | "Compatible with Warning" | "Unknown" | "Not Compatible";
+export type DealConfidenceLabel = "High" | "Medium" | "Low" | "Insufficient Data";
+export type DealUrgencyLabel = "Review Now" | "Review Soon" | "Watch" | "Low Priority";
+
+export interface DealOffer {
+  askingPrice?: number; suggestedOpeningOffer?: number; targetPurchasePrice?: number; maximumPurchasePrice?: number; walkAwayPrice?: number; counteroffer?: number; finalAcceptedPrice?: number;
+  status: "Not Contacted" | "Offer Planned" | "Offer Sent" | "Counter Received" | "Accepted" | "Declined" | "Purchased" | "Expired";
+  followUpDate?: string; sellerResponse?: string; notes?: string;
+}
+
+export interface DealOpportunity {
+  id: string; title: string; marketplace: string; listingType: string; category: string; sourceType: DealSourceType;
+  providerId?: string; externalListingId?: string;
+  askingPrice?: number; shipping?: number; estimatedTax?: number; buyerFees?: number; travelCost?: number; condition?: string;
+  sellerName?: string; sellerRating?: number; returnPolicy?: string; offersEnabled?: boolean; imageUrl?: string; listingUrl?: string; location?: string;
+  dateFound: string; lastChecked: string; estimatedResaleValue?: number; estimatedSellingFees?: number; estimatedSellerShipping?: number; estimatedRepairCost?: number;
+  targetPrice?: number; compatibleBuildIds?: string[]; missingPartCompleted?: string; compatibility: DealCompatibilityLabel; compatibilityExplanation?: string;
+  firstSeen?: string; lowestObservedPrice?: number; highestObservedPrice?: number; averageObservedPrice?: number; timesSeen?: number;
+  upgradePotential?: string; partOutValue?: number; templateId?: string; testingStatus?: string; saved?: boolean; dismissed?: boolean; offer?: DealOffer;
+  detectedHardware?: { manufacturer?: string; series?: string; model?: string; confidence: DealConfidenceLabel; evidence: string[]; ambiguityWarning?: string };
+  targetSource?: "Exact model" | "Saved search" | "Series" | "Category";
+}
+
+export interface SavedDealSearch {
+  id: string; name: string; category: string; terms: string; marketplace: string; condition: "Any" | "New" | "Used";
+  maximumItemPrice?: number; maximumLandedCost?: number; minimumExpectedProfit?: number; minimumRoi?: number; minimumOpportunityScore?: number; minimumSellerRating?: number;
+  targetPrice?: number;
+  seriesTargetPrice?: number; exactModelIncludes?: string[]; exactModelExcludes?: string[]; allowForParts?: boolean; excludeLaptopGpu?: boolean; excludeAccessories?: boolean;
+  requireAllRules?: boolean; minimumConfidence?: DealConfidenceLabel;
+  returnsRequired: boolean; offersEnabled?: boolean; fulfillment: "Any" | "Local pickup" | "Shipping"; maximumDistance?: number;
+  compatibleBuildId?: string; platform?: string; socket?: string; gpuManufacturer?: string; gpuGeneration?: string; cpuManufacturer?: string; cpuPlatform?: string;
+  riskThreshold: DealRiskLabel; notificationEnabled: boolean; active: boolean; lastChecked?: string; lastResultCount?: number; createdAt: string; updatedAt: string;
+}
+
+export interface WatchlistItem {
+  id: string; dealId: string; originalPrice?: number; currentPrice?: number; shipping?: number; landedCost?: number; availability: "Available" | "Sold" | "Removed" | "Unknown";
+  firstSeen: string; lastChecked: string; lowestObservedPrice?: number; highestObservedPrice?: number; priceChanges: Array<{ price?: number; date: string }>;
+  notes?: string; interestedBuildId?: string; targetPrice?: number; scoreHistory: Array<{ score: number; date: string }>; listingStatus: string;
+}
+
+export interface DealAlert {
+  id: string; dealId?: string; title: string; description: string; type: "Below target" | "Price dropped" | "ROI goal" | "Compatible part" | "Build unblocked" | "Offer" | "Listing removed" | "Risk increased";
+  unread: boolean; dismissed?: boolean; snoozedUntil?: string; createdAt: string;
+  fingerprint?: string; score?: number; qualification?: string[]; risks?: string[];
+}
+
 export interface TestingResult {
   buildId: string;
   checklist: TestingChecklistItem[];
@@ -184,6 +270,73 @@ export interface Settings {
   dealAlertFrequency: string;
   minimumTargetProfit: number;
   preferredParts: string[];
+}
+
+export interface PartOutComponent {
+  id: string;
+  category: string;
+  model: string;
+  condition: string;
+  workingStatus: string;
+  expectedPartOutPrice?: number;
+  marketplaceFees?: number;
+  shippingCost?: number;
+  confidence: "High" | "Medium" | "Low" | "Unknown";
+  valuationSource: string;
+}
+
+export interface BuyVsPartOutAnalysis {
+  id: string;
+  title: string;
+  marketplace: string;
+  askingPrice?: number;
+  shipping?: number;
+  tax?: number;
+  buyerFees?: number;
+  travelCost?: number;
+  repairCost?: number;
+  wholeResaleValue?: number;
+  upgradedResaleValue?: number;
+  sellingFees?: number;
+  sellerShipping?: number;
+  condition: string;
+  sellerRating?: string;
+  returnPolicy?: string;
+  location?: string;
+  knownIssues?: string;
+  testStatus?: string;
+  notes?: string;
+  listingUrl?: string;
+  components: PartOutComponent[];
+  createdAt: string;
+  status?: "Analysis Only" | "Part Out Started" | "Build Created" | "Upgrade Plan Created" | "Completed" | "Cancelled";
+  sourceTransactionId?: string;
+  createdBuildId?: string;
+}
+
+export interface SourceTransaction {
+  id: string;
+  analysisId: string;
+  title: string;
+  marketplace: string;
+  acquisitionCost: number;
+  purchaseDate: string;
+  seller?: string;
+  listingUrl?: string;
+  notes?: string;
+  createdInventoryIds: string[];
+  allocationMethod?: "Equal split" | "Proportional by estimated resale value" | "Manual Dollar Allocation" | "Custom Percentage Allocation";
+  conversionDate?: string;
+}
+
+export interface AuditEvent {
+  id: string;
+  date: string;
+  action: string;
+  relatedItem: string;
+  oldValue?: string;
+  newValue?: string;
+  source: "user" | "system";
 }
 
 export interface TaskItem {

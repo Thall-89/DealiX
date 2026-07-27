@@ -1,0 +1,1 @@
+export function safeHttpUrl(value?: string) { if (!value || value.length > 2_048) return undefined; try { const url = new URL(value); return url.protocol === "https:" || url.protocol === "http:" ? url.toString() : undefined; } catch { return undefined; } }

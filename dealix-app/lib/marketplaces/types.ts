@@ -1,0 +1,6 @@
+export type MarketplaceProviderId = "ebay" | "amazon" | "jawa" | "newegg" | "best-buy" | "craigslist" | "facebook-marketplace";
+export interface MarketplaceSearchRequest { queries: string[]; maxPrice?: number; condition?: string; category?: string; limit?: number; cursor?: string; }
+export interface NormalizedListing { providerId: MarketplaceProviderId; externalId: string; title: string; marketplace: string; url?: string; price?: number; shipping?: number; taxes?: number; currency?: string; seller?: { name?: string; rating?: number; feedbackScore?: number }; condition?: string; conditionDescription?: string; images: string[]; category?: string; foundAt: string; updatedAt?: string; location?: string; offersEnabled?: boolean; returnPolicy?: string; }
+export interface MarketplaceSearchPage { listings: NormalizedListing[]; nextCursor?: string; }
+export interface MarketplaceProviderDefinition { id: MarketplaceProviderId; label: string; liveSearch: boolean; configurationRequired: boolean; unavailableReason?: string; }
+export interface MarketplaceProvider { definition: MarketplaceProviderDefinition; status(): { configured: boolean; environment?: string; reason?: string }; search(request: MarketplaceSearchRequest): Promise<MarketplaceSearchPage>; }

@@ -1,0 +1,10 @@
+-- Run in the Supabase SQL editor before enabling cloud mode.
+create extension if not exists "pgcrypto";
+create table if not exists profiles (id uuid primary key references auth.users(id) on delete cascade, user_id uuid unique references auth.users(id) on delete cascade, created_at timestamptz default now(), updated_at timestamptz default now());
+create or replace function public.dealix_owned_table(name text) returns void language plpgsql as $$ begin execute format('create table if not exists %I (id uuid primary key default gen_random_uuid(), user_id uuid not null references auth.users(id) on delete cascade, data jsonb not null default ''{}''::jsonb, created_at timestamptz default now(), updated_at timestamptz default now())', name); execute format('alter table %I enable row level security', name); execute format('drop policy if exists "own rows" on %I', name); execute format('create policy "own rows" on %I for all using (auth.uid() = user_id) with check (auth.uid() = user_id)', name); end $$;
+select public.dealix_owned_table(name) from unnest(array['builds','build_parts','inventory_items','asset_history','tasks','testing_records','marketplace_listings','sales','source_transactions','cost_allocations','part_sales','buy_vs_part_out_analyses','saved_searches','marketplace_results','watchlist_items','deal_alerts','alert_fingerprints','notifications','receipts','receipt_files','audit_events','monitor_runs']) as name;
+create table if not exists app_settings (id uuid primary key default gen_random_uuid(), user_id uuid not null unique references auth.users(id) on delete cascade, data jsonb not null default '{}'::jsonb, created_at timestamptz default now(), updated_at timestamptz default now());
+alter table app_settings enable row level security;
+drop policy if exists "own rows" on app_settings;
+create policy "own rows" on app_settings for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+-- Create private buckets in the Storage dashboard: receipts, build-photos, sale-screenshots, benchmark-screenshots, listing-photos. Use users/{user_id}/{category}/{record_id}/{filename} paths and signed URLs only.

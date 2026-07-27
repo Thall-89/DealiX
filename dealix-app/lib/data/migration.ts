@@ -1,0 +1,3 @@
+import type { DealiXData } from "@/lib/store";
+import type { MigrationPreview } from "@/lib/data/types";
+export function previewMigration(data: DealiXData): MigrationPreview { const recordCounts = { builds:data.builds.length, inventory:data.inventory.length, tasks:data.tasks.length, listings:data.listings.length, savedSearches:data.savedDealSearches.length, alerts:data.dealAlerts.length, receipts:0 }; const ids = [...data.builds,...data.inventory,...data.tasks].map((item)=>item.id); return { recordCounts, warnings: ids.length === new Set(ids).size ? [] : ["Duplicate IDs were found. Choose Import as new or resolve them before upload."] }; }

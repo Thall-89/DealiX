@@ -1,4 +1,7 @@
-@import "tailwindcss";
+/* Scan only real UI source files. Generated Next folders must never become Tailwind input. */
+@import "tailwindcss" source(none);
+@source "./";
+@source "../components";
 
 :root {
   --background: #05070d;
@@ -13,6 +16,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
 
 ::selection {
   background: rgba(56, 189, 248, 0.3);
