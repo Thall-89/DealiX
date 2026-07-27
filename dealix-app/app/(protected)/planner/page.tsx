@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { ComponentPicker, type PlannerChoice } from "@/components/ComponentPicker";
 import { catalogSpecsForName, compatibleCatalog, type ComponentSpecs } from "@/lib/componentCatalog";
 import { dealixStore, useDealiXData } from "@/lib/store";
@@ -14,6 +14,10 @@ const sourceFor = (slot: Slot) => slot === "RAM" ? "Memory" : slot === "CPU Cool
 const money = (value?: number) => value === undefined ? "Not recorded" : `$${value.toFixed(2)}`;
 
 export default function PlannerPage() {
+  return <Suspense fallback={<PlannerLoading />}><PlannerWorkspace /></Suspense>;
+}
+
+function PlannerWorkspace() {
   const data = useDealiXData();
   const params = useSearchParams();
   const [mode, setMode] = useState<StartMode>(params.get("target") ? "Recon" : "Empty");
@@ -41,6 +45,14 @@ export default function PlannerPage() {
     <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]"><section className="overflow-hidden rounded-[28px] border border-white/10 bg-slate-950/40 shadow-[0_20px_60px_rgba(2,12,27,0.25)]"><div className="flex flex-col gap-2 border-b border-white/10 px-5 py-5 sm:flex-row sm:items-center sm:justify-between"><div><h2 className="font-semibold text-white">Your flip build</h2><p className="mt-1 text-sm text-zinc-500">Open any component to compare options before adding it.</p></div><span className="rounded-full border border-white/10 bg-white/[0.025] px-3 py-1.5 text-xs text-zinc-400">{Object.keys(chosen).length}/{slots.length} selected</span></div>{slots.map((slot, index) => { const selected = chosen[slot]; const recommended = choices[slot][0]; const display = selected ?? recommended; return <article key={slot} className="group grid gap-4 border-b border-white/[0.08] px-5 py-5 transition hover:bg-white/[0.025] last:border-0 md:grid-cols-[42px_minmax(0,1fr)_auto] md:items-center"><div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.035] text-sm font-semibold text-sky-200">{String(index + 1).padStart(2, "0")}</div><div><div className="flex flex-wrap items-center gap-2"><p className="text-sm font-medium text-zinc-300">{slot}</p>{selected ? <Badge text="Selected" tone="sky" /> : display ? <Badge text="Best available" tone="emerald" /> : <Badge text="Needs a part" tone="amber" />}{display ? <Badge text={display.source} tone="slate" /> : null}</div>{display ? <><h3 className="mt-2 font-medium text-white">{display.name}</h3><p className="mt-1 text-xs text-zinc-500">{display.note} · {display.compatibility}</p></> : <p className="mt-2 text-sm text-zinc-500">No owned, Recon, or connected marketplace option recorded yet.</p>}</div><div className="flex flex-wrap items-center gap-3 md:justify-end"><div className="text-left md:text-right"><p className="text-sm font-medium text-white">{display ? money(display.cost) : "—"}</p><p className="text-[11px] text-zinc-500">{selected ? "included cost" : display ? "recommended cost" : "recorded cost"}</p></div><button onClick={() => setPickerSlot(slot)} className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm font-medium text-zinc-200 transition hover:border-sky-400/30 hover:bg-sky-400/10 hover:text-sky-100">{selected || display ? "Compare" : "Find part"}</button></div></article>; })}</section><aside className="space-y-4"><section className="rounded-[24px] border border-white/10 bg-slate-950/40 p-5"><p className="text-xs font-semibold uppercase tracking-[0.14em] text-sky-300">Build snapshot</p><div className="mt-4 space-y-3"><Metric label="Selected cost" value={money(total)} /><Metric label="Owned parts used" value={String(inventoryCount)} /><Metric label="Parts still needed" value={String(missing.length)} /><Metric label="Goal" value={goal} /></div></section><section className="rounded-[24px] border border-amber-400/15 bg-amber-400/[0.045] p-5"><p className="text-sm font-medium text-amber-100">Compatibility is deliberate</p><p className="mt-2 text-xs leading-5 text-amber-100/70">DealiX only displays saved compatibility information. Socket, RAM generation, power draw, case fit, and BIOS support still require verified specifications.</p></section><button onClick={saveDraft} className="w-full rounded-xl bg-sky-500 px-4 py-3 text-sm font-medium text-white transition hover:-translate-y-0.5 hover:bg-sky-400">Save Draft Build</button></aside></div>
     {message ? <p role="status" className="rounded-xl border border-emerald-400/20 bg-emerald-500/10 p-3 text-sm text-emerald-200">{message}</p> : null}
     <ComponentPicker open={Boolean(pickerSlot)} slot={pickerSlot} choices={pickerSlot ? choices[pickerSlot] : []} selectedId={pickerSlot ? chosen[pickerSlot]?.id : undefined} onChoose={(choice) => { if (pickerSlot) selectPart(pickerSlot, choice); }} onClose={() => setPickerSlot(null)} />
+  </div>;
+}
+
+function PlannerLoading() {
+  return <div className="space-y-6 pb-8" aria-busy="true" aria-label="Loading AI Build Planner">
+    <div className="h-48 animate-pulse rounded-[28px] border border-white/10 bg-slate-950/40" />
+    <div className="h-24 animate-pulse rounded-[24px] border border-white/10 bg-slate-950/35" />
+    <div className="h-96 animate-pulse rounded-[28px] border border-white/10 bg-slate-950/40" />
   </div>;
 }
 
