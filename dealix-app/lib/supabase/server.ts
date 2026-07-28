@@ -27,3 +27,11 @@ export async function getServerUser() {
   const { data, error } = await client.auth.getUser();
   return error ? null : data.user;
 }
+
+export async function getServerIdentity() {
+  const user = await getServerUser();
+  if (!user?.email) return null;
+  const client = await createSupabaseServerClient();
+  const { data: profile } = client ? await client.from("profiles").select("display_name").eq("id", user.id).maybeSingle() : { data: null };
+  return { userId: user.id, email: user.email, displayName: profile?.display_name?.trim() || user.email };
+}

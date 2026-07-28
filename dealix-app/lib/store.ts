@@ -4,16 +4,11 @@ import { useSyncExternalStore } from "react";
 import { dealFingerprint, applySearchTargets, matchSavedSearch, qualifiesForAlert } from "@/lib/dealMatching";
 import { scoreDeal } from "@/lib/dealScoring";
 import {
-  builds,
-  inventoryItems,
-  notifications,
   settingsDefaults,
-  seedListings,
-  tasks,
   testingChecklist,
-  dealOpportunities,
-  savedDealSearches,
 } from "@/lib/mockData";
+import { activeRepository } from "@/lib/data/repository";
+import { supabase, supabaseConfigured } from "@/lib/supabase/client";
 import type {
   Build,
   InventoryItem,
@@ -33,7 +28,7 @@ import type {
 } from "@/types";
 import type { MarketIntelligenceSnapshot } from "@/lib/marketIntelligence/types";
 
-const STORAGE_KEY = "dealix_data_v1";
+const STORAGE_KEY_PREFIX = "dealix_data_v1";
 
 export interface DealiXData {
   builds: Build[];
@@ -53,72 +48,165 @@ export interface DealiXData {
   dealAlerts: DealAlert[];
 }
 
-function cloneSeedData(): DealiXData {
+function createEmptyData(): DealiXData {
   return {
-    builds: structuredClone(builds),
-    inventory: structuredClone(inventoryItems),
-    tasks: structuredClone(tasks),
-    notifications: structuredClone(notifications),
-    settings: structuredClone(settingsDefaults),
+    builds: [],
+    inventory: [],
+    tasks: [],
+    notifications: [],
+    settings: { ...structuredClone(settingsDefaults), profileName: "" },
     testingResults: {},
     analyses: [],
     sourceTransactions: [],
     auditEvents: [],
-    listings: structuredClone(seedListings),
+    listings: [],
     templates: [],
-    dealOpportunities: structuredClone(dealOpportunities),
-    savedDealSearches: structuredClone(savedDealSearches),
+    dealOpportunities: [],
+    savedDealSearches: [],
     watchlist: [],
     dealAlerts: [],
   };
 }
 
-const serverSnapshot = cloneSeedData();
+const serverSnapshot = createEmptyData();
 let data = serverSnapshot;
 let loaded = false;
 const listeners = new Set<() => void>();
+let activeUserId: string | null = null;
+let authSubscription: { unsubscribe: () => void } | null = null;
+let persistTimer: ReturnType<typeof setTimeout> | undefined;
+let hydratingUserId: string | null = null;
+
+function storageKey(userId: string | null) {
+  return `${STORAGE_KEY_PREFIX}:${userId ?? "anonymous"}`;
+}
+
+function normalizeSnapshot(snapshot: Partial<DealiXData> | null | undefined): DealiXData {
+  const empty = createEmptyData();
+  if (!snapshot) return empty;
+  return {
+    ...empty,
+    ...snapshot,
+    settings: { ...empty.settings, ...(snapshot.settings ?? {}) },
+    testingResults: snapshot.testingResults ?? {},
+    analyses: snapshot.analyses ?? [],
+    sourceTransactions: snapshot.sourceTransactions ?? [],
+    auditEvents: snapshot.auditEvents ?? [],
+    listings: snapshot.listings ?? [],
+    templates: snapshot.templates ?? [],
+    dealOpportunities: snapshot.dealOpportunities ?? [],
+    savedDealSearches: snapshot.savedDealSearches ?? [],
+    watchlist: snapshot.watchlist ?? [],
+    dealAlerts: snapshot.dealAlerts ?? [],
+    builds: snapshot.builds ?? [],
+    inventory: snapshot.inventory ?? [],
+    tasks: snapshot.tasks ?? [],
+    notifications: snapshot.notifications ?? [],
+  };
+}
+
+function readLocalSnapshot(userId: string | null) {
+  if (typeof window === "undefined") return null;
+  const stored = window.localStorage.getItem(storageKey(userId));
+  if (!stored) return null;
+  return normalizeSnapshot(JSON.parse(stored) as Partial<DealiXData>);
+}
+
+function persistLocalSnapshot() {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(storageKey(activeUserId), JSON.stringify(data));
+}
+
+function queueCloudSave() {
+  if (!supabaseConfigured || !activeUserId || hydratingUserId) return;
+  if (persistTimer) clearTimeout(persistTimer);
+  const ownerId = activeUserId;
+  const snapshot = data;
+  persistTimer = setTimeout(async () => {
+    if (activeUserId !== ownerId || hydratingUserId) return;
+    try {
+      await activeRepository().save(snapshot, ownerId);
+    } catch (error) {
+      console.error("Failed to save DealiX workspace to cloud storage.", error);
+    }
+  }, 600);
+}
+
+function emit(syncCloud = true) {
+  persistLocalSnapshot();
+  if (syncCloud) queueCloudSave();
+  listeners.forEach((listener) => listener());
+}
+
+function setData(next: DealiXData, syncCloud = true) {
+  data = next;
+  emit(syncCloud);
+}
+
+async function hydrateUserWorkspace(userId: string) {
+  hydratingUserId = userId;
+  try {
+    const cloudSnapshot = await activeRepository().load();
+    if (activeUserId !== userId) return;
+    if (cloudSnapshot) {
+      setData(normalizeSnapshot(cloudSnapshot), false);
+      return;
+    }
+    const localSnapshot = readLocalSnapshot(userId);
+    setData(localSnapshot ?? createEmptyData(), false);
+  } catch (error) {
+    if (activeUserId !== userId) return;
+    console.error("Failed to load DealiX workspace from cloud storage.", error);
+    const localSnapshot = readLocalSnapshot(userId);
+    setData(localSnapshot ?? createEmptyData(), false);
+  } finally {
+    if (hydratingUserId === userId) hydratingUserId = null;
+  }
+}
+
+function bindAuthSession() {
+  if (!supabaseConfigured || !supabase || authSubscription) return;
+
+  const handleUser = async (userId: string | null) => {
+    if (userId === activeUserId) return;
+    if (persistTimer) { clearTimeout(persistTimer); persistTimer = undefined; }
+    activeUserId = userId;
+    if (!userId) {
+      setData(createEmptyData(), false);
+      return;
+    }
+    // Never render or persist the previous account's workspace while the new
+    // account is being hydrated. This also prevents a rapid account switch
+    // from writing stale data into the next user's cloud snapshot.
+    setData(createEmptyData(), false);
+    await hydrateUserWorkspace(userId);
+  };
+
+  void supabase.auth.getUser().then(({ data: auth }) => handleUser(auth.user?.id ?? null)).catch((error) => {
+    console.error("Failed to resolve authenticated user for DealiX workspace.", error);
+    void handleUser(null);
+  });
+
+  const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    void handleUser(session?.user?.id ?? null);
+  });
+  authSubscription = listener.subscription;
+}
 
 function load() {
   if (loaded || typeof window === "undefined") return;
   loaded = true;
-
-  try {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored) as Partial<DealiXData>;
-      data = {
-        ...cloneSeedData(),
-        ...parsed,
-        testingResults: parsed.testingResults ?? {},
-        analyses: parsed.analyses ?? [],
-        sourceTransactions: parsed.sourceTransactions ?? [],
-        auditEvents: parsed.auditEvents ?? [],
-        listings: parsed.listings ?? structuredClone(seedListings),
-        templates: parsed.templates ?? [],
-        dealOpportunities: parsed.dealOpportunities ?? structuredClone(dealOpportunities),
-        savedDealSearches: parsed.savedDealSearches ?? structuredClone(savedDealSearches),
-        watchlist: parsed.watchlist ?? [],
-        dealAlerts: parsed.dealAlerts ?? [],
-      };
-    }
-  } catch {
-    data = cloneSeedData();
+  if (supabaseConfigured) {
+    bindAuthSession();
+    return;
   }
-}
-
-function persist() {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-}
-
-function emit() {
-  persist();
-  listeners.forEach((listener) => listener());
-}
-
-function setData(next: DealiXData) {
-  data = next;
-  emit();
+  try {
+    data = readLocalSnapshot(null) ?? createEmptyData();
+  } catch (error) {
+    console.error("Failed to load local DealiX workspace.", error);
+    data = createEmptyData();
+  }
+  emit(false);
 }
 
 export const dealixStore = {
@@ -306,7 +394,7 @@ export const dealixStore = {
     this.addBuild(clone);
   },
   resetDemoData() {
-    setData(cloneSeedData());
+    setData(createEmptyData());
   },
 };
 

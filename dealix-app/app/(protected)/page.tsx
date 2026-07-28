@@ -8,16 +8,19 @@ import { BuildCard } from "@/components/BuildCard";
 import { getDashboardMetrics, useDealiXData } from "@/lib/store";
 import { FinancialSummary } from "@/components/FinancialSummary";
 import { TodayGamePlan } from "@/components/TodayGamePlan";
+import { useAuthIdentity } from "@/components/AuthIdentity";
 
 export default function HomePage() {
-  const snapshot = useDealiXData();
+  const workspace = useDealiXData();
+  const { displayName } = useAuthIdentity();
+  const snapshot = { ...workspace, settings: { ...workspace.settings, profileName: displayName } };
   const metrics = getDashboardMetrics(snapshot);
 
   return (
     <div className="space-y-6">
       <PageHeader
         eyebrow="Morning briefing"
-        title={`Good morning, ${snapshot.settings.profileName} 👋`}
+        title={`Hi, ${displayName}`}
         description={`${metrics.pendingTasks} open task${metrics.pendingTasks === 1 ? "" : "s"}, ${metrics.openBuilds} open build${metrics.openBuilds === 1 ? "" : "s"}, and the next most useful actions are prioritized below.`}
         action={
           <div className="rounded-[24px] border border-sky-400/20 bg-sky-500/10 p-5 sm:min-w-[260px]">
@@ -55,9 +58,7 @@ export default function HomePage() {
               <Link href="/builds" className="text-sm font-medium text-sky-300 transition-colors hover:text-sky-200">View history</Link>
             </div>
             <div className="space-y-3">
-              {snapshot.builds.map((build) => (
-                <BuildCard key={build.id} build={build} />
-              ))}
+              {snapshot.builds.map((build) => <BuildCard key={build.id} build={build} />)}
             </div>
           </div>
         </div>

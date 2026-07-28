@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 const configured = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
 export async function proxy(request: NextRequest) {
-  if (!configured) return NextResponse.next();
+  if (!configured) return NextResponse.redirect(new URL("/login?error=supabase-not-configured", request.url));
   let response = NextResponse.next({ request });
   response.headers.set("Cache-Control", "private, no-store, max-age=0");
   response.headers.set("Vary", "Cookie");

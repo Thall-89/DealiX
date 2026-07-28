@@ -1,6 +1,8 @@
 import { AuthPanel } from "@/components/AuthPanel";
 import Image from "next/image";
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { getServerUser } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Sign In | DealiX" };
 
@@ -11,7 +13,8 @@ function FeatureMark({ index }: { index: number }) {
   return <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4 fill-none stroke-current stroke-[1.7]">{paths[index].split("M").filter(Boolean).map((path, pathIndex) => <path key={pathIndex} d={`M${path}`} strokeLinecap="round" strokeLinejoin="round" />)}</svg>;
 }
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  if (await getServerUser()) redirect("/");
   return <main className="min-h-screen bg-[#080b13] p-3 text-zinc-100 sm:p-5 lg:p-6"><div className="relative mx-auto grid min-h-[calc(100vh-1.5rem)] max-w-[1580px] overflow-hidden rounded-[28px] border border-white/[0.08] bg-[#0b0f19] shadow-2xl shadow-black/30 md:min-h-[calc(100vh-2.5rem)] md:grid-cols-[minmax(0,0.86fr)_minmax(420px,1fr)] lg:min-h-[calc(100vh-3rem)] lg:grid-cols-[minmax(0,1fr)_minmax(500px,0.95fr)]">
     <section className="relative hidden overflow-hidden border-r border-white/[0.07] bg-[radial-gradient(circle_at_24%_18%,rgba(57,137,255,0.20),transparent_28%),radial-gradient(circle_at_70%_72%,rgba(87,67,221,0.14),transparent_34%),linear-gradient(145deg,#111a2c_0%,#0b1120_48%,#090d16_100%)] p-8 md:flex md:flex-col md:p-10 lg:p-14">
       <div aria-hidden="true" className="absolute inset-0 opacity-[0.15] [background-image:linear-gradient(rgba(148,163,184,0.16)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.16)_1px,transparent_1px)] [background-size:42px_42px] [mask-image:linear-gradient(to_bottom,black,transparent_80%)]" />

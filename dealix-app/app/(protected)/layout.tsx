@@ -1,11 +1,14 @@
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { AppShell } from "@/components/AppShell";
-import { getServerUser, supabaseServerConfigured } from "@/lib/supabase/server";
+import { getServerIdentity } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: { default: "Dashboard | DealiX", template: "%s | DealiX" } };
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function ProtectedLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  if (supabaseServerConfigured && !(await getServerUser())) redirect("/login");
-  return <AppShell>{children}</AppShell>;
+  const identity = await getServerIdentity();
+  if (!identity) redirect("/login");
+  return <AppShell identity={identity}>{children}</AppShell>;
 }
