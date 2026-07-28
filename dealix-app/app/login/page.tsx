@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getServerUser } from "@/lib/supabase/server";
 
-export const metadata: Metadata = { title: "Sign In | DealiX" };
+export const metadata: Metadata = { title: "Sign In" };
 
 const features = ["Build Management", "Inventory Tracking", "Market Intelligence", "Profit Analytics", "Business Dashboard"];
 

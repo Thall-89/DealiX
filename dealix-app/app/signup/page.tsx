@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { AuthPanel } from "@/components/AuthPanel";
 import { getServerUser } from "@/lib/supabase/server";
 
-export const metadata: Metadata = { title: "Create Workspace | DealiX" };
+export const metadata: Metadata = { title: "Create Workspace" };
 
 export default async function SignUpPage() {
   if (await getServerUser()) redirect("/");

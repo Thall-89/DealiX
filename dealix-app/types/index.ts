@@ -270,6 +270,7 @@ export interface Settings {
   dealAlertFrequency: string;
   minimumTargetProfit: number;
   preferredParts: string[];
+  onboardingDismissed: boolean;
 }
 
 export interface PartOutComponent {

@@ -13,13 +13,19 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DealiX | Operations OS for PC Flipping",
+  metadataBase: new URL("https://www.getdealix.com"),
+  title: { default: "DealiX | Operations OS for PC Flipping", template: "%s | DealiX" },
   description: "The operating system for buying, building, refurbishing, and selling PCs for profit.",
+  applicationName: "DealiX",
+  category: "Business",
+  openGraph: { type: "website", siteName: "DealiX", title: "DealiX | Operations OS for PC Flipping", description: "The operating system for buying, building, refurbishing, and selling PCs for profit." },
+  twitter: { card: "summary", title: "DealiX | Operations OS for PC Flipping", description: "The operating system for buying, building, refurbishing, and selling PCs for profit." },
   icons: {
     icon: [{ url: "/icon", type: "image/png", sizes: "48x48" }],
     shortcut: ["/icon"],
     apple: [{ url: "/apple-icon", type: "image/png", sizes: "180x180" }],
   },
+  manifest: "/manifest.webmanifest",
 };
 
 export default function RootLayout({

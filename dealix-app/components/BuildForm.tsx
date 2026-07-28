@@ -7,7 +7,7 @@ interface BuildFormProps { initial?: Build; onSave: (build: Build) => void; onCa
 
 function blankBuild(): Build {
   const id = `build-${crypto.randomUUID()}`;
-  return { id, slug: id, name: "", status: "Active", buildCost: 0, cpu: "", gpu: "", motherboard: "", ram: "", storage: "", psu: "", case: "", cooling: "", os: "", listingPrice: 0, marketplace: "", mercariPayout: 0, netProfit: 0, notes: "", partsNeeded: [], health: "Not assessed" };
+  return { id, slug: id, name: "", status: "Active", buildCost: 0, cpu: "", gpu: "", motherboard: "", ram: "", storage: "", psu: "", case: "", cooling: "", os: "", listingPrice: 0, marketplace: "Facebook Marketplace", mercariPayout: 0, netProfit: 0, notes: "", partsNeeded: [], health: "Not assessed" };
 }
 
 export function BuildForm({ initial, onSave, onCancel }: BuildFormProps) {

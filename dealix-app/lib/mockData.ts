@@ -437,7 +437,7 @@ export const plannedFeatures = [
 ];
 
 export const settingsDefaults = {
-  profileName: "Tristen",
+  profileName: "",
   preferredCurrency: "USD",
   defaultMarketplace: "Mercari",
   discordAlerts: true,
@@ -446,6 +446,7 @@ export const settingsDefaults = {
   dealAlertFrequency: "Daily",
   minimumTargetProfit: 100,
   preferredParts: ["RTX 4060", "RTX 3060 Ti", "Ryzen 5", "white cases"],
+  onboardingDismissed: false,
 };
 
 const dealSeedDate = "2026-07-25T12:00:00.000Z";

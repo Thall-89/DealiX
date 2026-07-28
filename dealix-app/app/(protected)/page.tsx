@@ -9,12 +9,15 @@ import { getDashboardMetrics, useDealiXData } from "@/lib/store";
 import { FinancialSummary } from "@/components/FinancialSummary";
 import { TodayGamePlan } from "@/components/TodayGamePlan";
 import { useDashboardGreeting } from "@/components/DashboardGreeting";
+import { GettingStarted } from "@/components/GettingStarted";
 
 export default function HomePage() {
   const workspace = useDealiXData();
   const greeting = useDashboardGreeting();
   const snapshot = workspace;
   const metrics = getDashboardMetrics(snapshot);
+  const blockedBuild = snapshot.builds.find((build) => build.partsNeeded?.some((part) => part.priority === "High" && part.status !== "Resolved"));
+  const recentTargets = snapshot.dealOpportunities.filter((target) => !target.dismissed).slice(0, 3);
 
   return (
     <div className="space-y-6">
@@ -31,10 +34,12 @@ export default function HomePage() {
         }
       />
 
-      <div className="rounded-[28px] border border-amber-400/20 bg-amber-500/10 p-4 text-sm text-amber-200">
-        <div className="font-semibold">Legacy Powerhouse is blocked: compatible motherboard needed.</div>
-        <div className="mt-1 text-amber-300/90">This build is active and needs a motherboard compatible with the Intel Core i7-7700K before it can continue.</div>
-      </div>
+      <GettingStarted />
+
+      {blockedBuild ? <div className="rounded-[28px] border border-amber-400/20 bg-amber-500/10 p-4 text-sm text-amber-200">
+        <div className="font-semibold">{blockedBuild.name} is blocked: {blockedBuild.partsNeeded?.find((part) => part.priority === "High")?.name ?? "a high-priority part"} needed.</div>
+        <div className="mt-1 text-amber-300/90">Resolve this missing part to move the build forward.</div>
+      </div> : null}
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Confirmed Profit" value={`$${metrics.confirmedNetProfit.toFixed(2)}`} hint="Realized profit" icon="💰" accent="sky" />
@@ -57,9 +62,7 @@ export default function HomePage() {
               </div>
               <Link href="/builds" className="text-sm font-medium text-sky-300 transition-colors hover:text-sky-200">View history</Link>
             </div>
-            <div className="space-y-3">
-              {snapshot.builds.map((build) => <BuildCard key={build.id} build={build} />)}
-            </div>
+            <div className="space-y-3">{snapshot.builds.length ? snapshot.builds.map((build) => <BuildCard key={build.id} build={build} />) : <div className="rounded-2xl border border-dashed border-white/15 bg-white/5 p-5 text-sm text-zinc-400">No builds yet. Start with a build you own, or plan one around a part you found in Recon.</div>}</div>
           </div>
         </div>
 
@@ -73,20 +76,18 @@ export default function HomePage() {
               <div className="rounded-full border border-purple-400/20 bg-slate-950/40 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-purple-300">Smart</div>
             </div>
             <div className="mt-5 rounded-2xl border border-white/10 bg-slate-950/40 p-4">
-              <p className="text-sm leading-7 text-zinc-300">Blue Titan is currently priced slightly above the current market range. Legacy Powerhouse needs a compatible motherboard before it can move ahead. The best near-term move is to focus on testing and pricing before listing.</p>
+              <p className="text-sm leading-7 text-zinc-300">{blockedBuild ? `${blockedBuild.name} has a high-priority missing part. Resolve it before you spend time testing or listing.` : snapshot.builds.length ? "Review your active builds for missing parts, testing gaps, and pricing before listing." : "Create a build or add inventory first. DealiX will then surface the most useful next action."}</p>
               <Link href="/ai" className="mt-4 inline-flex rounded-full bg-sky-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-sky-400">Open AI Assistant</Link>
             </div>
           </div>
 
           <div className="rounded-[28px] border border-white/10 bg-slate-950/40 p-6 shadow-[0_20px_60px_rgba(2,12,27,0.34)] backdrop-blur-xl">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-white">Marketplace Activity</h2>
-              <span className="text-sm text-zinc-500">Demo placeholder</span>
+              <h2 className="text-xl font-semibold text-white">Recon Activity</h2>
+              <Link href="/deals" className="text-sm font-medium text-sky-300 hover:text-sky-200">Open Recon</Link>
             </div>
             <div className="space-y-3 text-sm text-zinc-300">
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-3">RTX 4060 deal looks promising if you can verify the card works.</div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-3">Blue Titan pricing still needs attention before it is listed more aggressively.</div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-3">A compatible motherboard search is now part of the Legacy Powerhouse workflow.</div>
+              {recentTargets.length ? recentTargets.map((target) => <div key={target.id} className="rounded-2xl border border-white/10 bg-white/5 p-3"><span className="font-medium text-white">{target.title}</span><span className="ml-2 text-zinc-400">{target.marketplace}</span></div>) : <div className="rounded-2xl border border-dashed border-white/15 bg-white/5 p-3 text-zinc-400">Recon is ready when you are. Choose hardware interests and it will surface worthwhile targets here.</div>}
             </div>
           </div>
 
