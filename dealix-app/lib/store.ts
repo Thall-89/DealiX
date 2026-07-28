@@ -249,23 +249,65 @@ export const dealixStore = {
       notes: part.details,
     }));
     const status = previous?.partsNeeded?.length && !build.partsNeeded?.length && build.status === "Active" ? "Active" : build.status;
-    setData({ ...data, builds: data.builds.map((item) => (item.id === build.id ? { ...build, status } : item)), tasks: [...reconciledTasks, ...newTasks] });
+    setData({ ...data, builds: data.builds.map((item) => (item.id === build.id ? { ...build, status, updatedAt: new Date().toISOString() } : item)), tasks: [...reconciledTasks, ...newTasks] });
   },
   addBuild(build: Build) {
-    data = { ...data, builds: [...data.builds, build] };
-    this.updateBuild(build);
+    const now = new Date().toISOString();
+    const nextBuild = { ...build, createdAt: build.createdAt ?? now, updatedAt: now };
+    data = { ...data, builds: [...data.builds, nextBuild] };
+    this.updateBuild(nextBuild);
   },
   deleteBuild(id: string) {
     setData({ ...data, builds: data.builds.filter((build) => build.id !== id), tasks: data.tasks.filter((task) => task.buildId !== id) });
   },
   updateInventory(item: InventoryItem) {
-    setData({ ...data, inventory: data.inventory.map((entry) => (entry.id === item.id ? item : entry)) });
+    const assignedBuild = item.assignedBuild ? data.builds.find((build) => build.name === item.assignedBuild && !build.archivedAt) : undefined;
+    const nextItem = assignedBuild ? { ...item, currentStatus: "Assigned to Build", availability: "Unavailable" as const, updatedAt: new Date().toISOString() } : { ...item, assignedBuild: undefined, updatedAt: new Date().toISOString() };
+    setData({ ...data, inventory: data.inventory.map((entry) => (entry.id === item.id ? nextItem : entry)) });
   },
   addInventory(item: InventoryItem) {
-    setData({ ...data, inventory: [...data.inventory, item] });
+    setData({ ...data, inventory: [...data.inventory, { ...item, quantity: item.quantity ?? 1, updatedAt: new Date().toISOString() }] });
   },
   deleteInventory(id: string) {
     setData({ ...data, inventory: data.inventory.filter((item) => item.id !== id) });
+  },
+  archiveInventory(ids: string[]) {
+    const idSet = new Set(ids); const now = new Date().toISOString();
+    setData({ ...data, inventory: data.inventory.map((item) => idSet.has(item.id) ? { ...item, archivedAt: now, updatedAt: now } : item) });
+  },
+  restoreInventory(ids: string[]) {
+    const idSet = new Set(ids); const now = new Date().toISOString();
+    setData({ ...data, inventory: data.inventory.map((item) => idSet.has(item.id) ? { ...item, archivedAt: undefined, currentStatus: item.assignedBuild ? "Assigned to Build" : "Available", availability: item.assignedBuild ? "Unavailable" : "Available", updatedAt: now } : item) });
+  },
+  bulkUpdateInventory(ids: string[], patch: Partial<Pick<InventoryItem, "currentStatus" | "testingStatus" | "storageLocation" | "condition">>) {
+    const idSet = new Set(ids); const now = new Date().toISOString();
+    setData({ ...data, inventory: data.inventory.map((item) => idSet.has(item.id) ? { ...item, ...patch, updatedAt: now } : item) });
+  },
+  assignInventoryToBuild(itemId: string, buildId?: string) {
+    const item = data.inventory.find((entry) => entry.id === itemId);
+    if (!item) return { ok: false, message: "Inventory part not found." };
+    const build = buildId ? data.builds.find((entry) => entry.id === buildId) : undefined;
+    if (buildId && !build) return { ok: false, message: "Build not found." };
+    const now = new Date().toISOString();
+    const assigned = build ? { ...item, assignedBuild: build.name, currentStatus: "Assigned to Build", availability: "Unavailable" as const, updatedAt: now } : { ...item, assignedBuild: undefined, currentStatus: "Available", availability: "Available" as const, updatedAt: now };
+    setData({ ...data, inventory: data.inventory.map((entry) => entry.id === itemId ? assigned : entry) });
+    return { ok: true, message: build ? `${item.name} assigned to ${build.name}.` : `${item.name} is available again.` };
+  },
+  archiveBuild(id: string) {
+    const now = new Date().toISOString();
+    setData({ ...data, builds: data.builds.map((build) => build.id === id ? { ...build, archivedAt: now, updatedAt: now } : build) });
+  },
+  restoreBuild(id: string) {
+    const now = new Date().toISOString();
+    setData({ ...data, builds: data.builds.map((build) => build.id === id ? { ...build, archivedAt: undefined, updatedAt: now } : build) });
+  },
+  toggleBuildFavorite(id: string) {
+    const now = new Date().toISOString();
+    setData({ ...data, builds: data.builds.map((build) => build.id === id ? { ...build, favorite: !build.favorite, updatedAt: now } : build) });
+  },
+  finalizeBuild(id: string) {
+    const now = new Date().toISOString();
+    setData({ ...data, builds: data.builds.map((build) => build.id === id ? { ...build, finalizedAt: now, updatedAt: now } : build) });
   },
   updateTask(task: TaskItem) {
     setData({ ...data, tasks: data.tasks.map((item) => (item.id === task.id ? task : item)) });

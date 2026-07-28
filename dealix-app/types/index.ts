@@ -113,6 +113,11 @@ export interface Build {
   acceptedOffer?: string;
   health?: "Ready" | "Needs attention" | "Blocked" | "Not assessed";
   listingDrafts?: ListingDraft[];
+  createdAt?: string;
+  updatedAt?: string;
+  finalizedAt?: string;
+  archivedAt?: string;
+  favorite?: boolean;
 }
 
 export interface InventoryItem {
@@ -141,6 +146,9 @@ export interface InventoryItem {
   personalPc?: boolean;
   quantity?: number;
   assetHistory?: Array<{ action: string; note?: string; date?: string }>;
+  archivedAt?: string;
+  receiptReference?: string;
+  updatedAt?: string;
 }
 
 export interface MarketplaceListing {

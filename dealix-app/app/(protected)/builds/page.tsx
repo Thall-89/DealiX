@@ -21,14 +21,16 @@ export default function BuildsPage() {
   const [adding, setAdding] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [saveMessage, setSaveMessage] = useState("");
+  const [showArchived, setShowArchived] = useState(false);
 
   const visibleBuilds = useMemo(() => {
     return builds.filter((build) => {
+      if (Boolean(build.archivedAt) !== showArchived) return false;
       const matchesFilter = filter === "All" || build.status === filter;
       const matchesQuery = `${build.name} ${build.cpu ?? ""} ${build.gpu ?? ""}`.toLowerCase().includes(query.toLowerCase());
       return matchesFilter && matchesQuery;
     });
-  }, [builds, filter, query]);
+  }, [builds, filter, query, showArchived]);
 
   return (
     <div className="space-y-6">
@@ -60,6 +62,7 @@ export default function BuildsPage() {
                 {item}
               </button>
             ))}
+            <button onClick={() => setShowArchived((value) => !value)} className={`rounded-full px-3 py-2 text-sm transition ${showArchived ? "bg-amber-500/15 text-amber-200" : "border border-white/10 bg-white/5 text-zinc-400"}`}>{showArchived ? "Viewing archived" : "Archived"}</button>
           </div>
         </div>
       </div>
@@ -72,6 +75,8 @@ export default function BuildsPage() {
                 <div className="flex flex-wrap items-center gap-3">
                   <h2 className="text-xl font-semibold text-white">{build.name}</h2>
                   <StatusBadge status={build.status} />
+                  {build.favorite ? <span className="rounded-full border border-amber-300/30 bg-amber-400/10 px-2 py-1 text-xs text-amber-100">Favorite</span> : null}
+                  {build.finalizedAt ? <span className="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-1 text-xs text-emerald-100">Finalized</span> : null}
                 </div>
                 <div className="mt-3 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-zinc-300">
                   <div className="grid gap-2 md:grid-cols-2">
@@ -113,6 +118,9 @@ export default function BuildsPage() {
               <div className="flex flex-wrap gap-2">
                 <Link href={`/builds/${build.slug}`} className="rounded-full border border-white/10 px-3 py-2 text-sm text-zinc-300 transition hover:border-sky-400/30 hover:text-sky-200">View Details</Link>
                 <Link href={`/builds/${build.slug}`} className="rounded-full border border-white/10 px-3 py-2 text-sm text-zinc-300 transition hover:border-sky-400/30 hover:text-sky-200">Edit</Link>
+                <button onClick={() => { dealixStore.toggleBuildFavorite(build.id); setSaveMessage(`${build.name} ${build.favorite ? "removed from" : "added to"} favorites.`); }} className="rounded-full border border-white/10 px-3 py-2 text-sm text-zinc-300">{build.favorite ? "Unfavorite" : "Favorite"}</button>
+                <button onClick={() => { dealixStore.cloneBuild(build.id); setSaveMessage(`${build.name} was cloned as a new planning build.`); }} className="rounded-full border border-white/10 px-3 py-2 text-sm text-zinc-300">Clone</button>
+                {!showArchived ? <><button onClick={() => { dealixStore.finalizeBuild(build.id); setSaveMessage(`${build.name} was finalized. You can still edit it later.`); }} className="rounded-full border border-emerald-400/20 px-3 py-2 text-sm text-emerald-200">Finalize</button><button onClick={() => { dealixStore.archiveBuild(build.id); setSaveMessage(`${build.name} archived.`); }} className="rounded-full border border-amber-400/20 px-3 py-2 text-sm text-amber-200">Archive</button></> : <button onClick={() => { dealixStore.restoreBuild(build.id); setSaveMessage(`${build.name} restored.`); }} className="rounded-full border border-emerald-400/20 px-3 py-2 text-sm text-emerald-200">Restore</button>}
                 <button onClick={() => setDeletingId(build.id)} className="rounded-full border border-rose-400/20 px-3 py-2 text-sm text-rose-200">Delete</button>
               </div>
             </div>

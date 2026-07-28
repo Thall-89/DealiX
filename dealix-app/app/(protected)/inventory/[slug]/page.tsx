@@ -41,6 +41,11 @@ export default function InventoryDetailPage() {
           <button onClick={saveChanges} className="rounded-full bg-sky-500 px-4 py-2 text-sm font-medium text-white">Save</button>
           <button onClick={() => setDraft(item)} className="rounded-full border border-white/10 px-4 py-2 text-sm text-zinc-300">Discard Unsaved Changes</button>
         </div>
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-zinc-300"><div className="text-xs uppercase tracking-[0.18em] text-zinc-500">Quantity</div><div className="mt-2 text-white">{draft.quantity ?? 1}</div></div>
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-zinc-300"><div className="text-xs uppercase tracking-[0.18em] text-zinc-500">Current value</div><div className="mt-2 text-white">{draft.estimatedResaleValue === undefined ? "Not entered" : `$${draft.estimatedResaleValue.toFixed(2)}`}</div></div>
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-zinc-300"><div className="text-xs uppercase tracking-[0.18em] text-zinc-500">Receipt reference</div><div className="mt-2 break-words text-white">{draft.receiptReference || "Not entered"}</div></div>
+        </div>
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <label className="rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-zinc-300">
             <div className="text-xs uppercase tracking-[0.24em] text-zinc-500">Part name</div>

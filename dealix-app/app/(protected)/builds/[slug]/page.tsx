@@ -66,6 +66,10 @@ export default function BuildDetailPage() {
         action={
           <div className="flex flex-wrap gap-2">
             <button onClick={() => setEditing(true)} className="rounded-full border border-white/10 px-4 py-2 text-sm text-zinc-300">Edit Build</button>
+            <button onClick={() => { dealixStore.toggleBuildFavorite(draft.id); setDraft((current) => ({ ...current, favorite: !current.favorite })); setSaveMessage(draft.favorite ? "Removed from favorites." : "Added to favorites."); }} className="rounded-full border border-white/10 px-4 py-2 text-sm text-zinc-300">{draft.favorite ? "Unfavorite" : "Favorite"}</button>
+            <button onClick={() => { dealixStore.cloneBuild(draft.id); setSaveMessage("Build cloned as a separate planning draft."); }} className="rounded-full border border-white/10 px-4 py-2 text-sm text-zinc-300">Clone</button>
+            {!draft.finalizedAt ? <button onClick={() => { dealixStore.finalizeBuild(draft.id); setDraft((current) => ({ ...current, finalizedAt: new Date().toISOString() })); setSaveMessage("Build finalized. You can still edit it if facts change."); }} className="rounded-full border border-emerald-400/20 px-4 py-2 text-sm text-emerald-200">Finalize</button> : null}
+            {!draft.archivedAt ? <button onClick={() => { dealixStore.archiveBuild(draft.id); setDraft((current) => ({ ...current, archivedAt: new Date().toISOString() })); setSaveMessage("Build archived. Restore it from the Builds page when needed."); }} className="rounded-full border border-amber-400/20 px-4 py-2 text-sm text-amber-200">Archive</button> : null}
             <RecreateBuild build={draft} />
             <button onClick={saveChanges} className="rounded-full bg-sky-500 px-4 py-2 text-sm font-medium text-white">Save</button>
             <button onClick={resetDemoData} className="rounded-full border border-white/10 px-4 py-2 text-sm text-zinc-300">Reset Demo Data</button>
