@@ -8,20 +8,20 @@ import { BuildCard } from "@/components/BuildCard";
 import { getDashboardMetrics, useDealiXData } from "@/lib/store";
 import { FinancialSummary } from "@/components/FinancialSummary";
 import { TodayGamePlan } from "@/components/TodayGamePlan";
-import { useAuthIdentity } from "@/components/AuthIdentity";
+import { useDashboardGreeting } from "@/components/DashboardGreeting";
 
 export default function HomePage() {
   const workspace = useDealiXData();
-  const { displayName } = useAuthIdentity();
-  const snapshot = { ...workspace, settings: { ...workspace.settings, profileName: displayName } };
+  const greeting = useDashboardGreeting();
+  const snapshot = workspace;
   const metrics = getDashboardMetrics(snapshot);
 
   return (
     <div className="space-y-6">
       <PageHeader
         eyebrow="Morning briefing"
-        title={`Hi, ${displayName}`}
-        description={`${metrics.pendingTasks} open task${metrics.pendingTasks === 1 ? "" : "s"}, ${metrics.openBuilds} open build${metrics.openBuilds === 1 ? "" : "s"}, and the next most useful actions are prioritized below.`}
+        title={greeting.title}
+        description={`${greeting.description} You have ${metrics.pendingTasks} open task${metrics.pendingTasks === 1 ? "" : "s"} and ${metrics.openBuilds} open build${metrics.openBuilds === 1 ? "" : "s"}.`}
         action={
           <div className="rounded-[24px] border border-sky-400/20 bg-sky-500/10 p-5 sm:min-w-[260px]">
             <div className="text-xs uppercase tracking-[0.24em] text-sky-300">Today&apos;s operating view</div>

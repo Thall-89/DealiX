@@ -25,4 +25,4 @@ export async function proxy(request: NextRequest) {
   return response;
 }
 
-export const config = { matcher: ["/((?!api|_next/static|_next/image|brand|icon|apple-icon|login).*)"] };
+export const config = { matcher: ["/((?!api|_next/static|_next/image|brand|icon|apple-icon|login|signup).*)"] };

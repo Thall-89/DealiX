@@ -6,6 +6,7 @@ import { dealixStore, useDealiXData } from "@/lib/store";
 import { AuthPanel } from "@/components/AuthPanel";
 import { MigrationPanel } from "@/components/MigrationPanel";
 import { secureRequestHeaders } from "@/lib/security/client";
+import Link from "next/link";
 
 export default function SettingsPage() {
   const { settings } = useDealiXData();
@@ -20,16 +21,12 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader eyebrow="Preferences" title="Settings" description="Adjust mock preferences and review future integrations for the product." />
+      <PageHeader eyebrow="Preferences" title="Settings" description="Adjust workspace preferences and review future integrations." action={<Link href="/settings/profile" className="inline-flex h-11 items-center rounded-xl bg-sky-500 px-4 text-sm font-semibold text-white transition hover:bg-sky-400">Profile & account</Link>} />
 
       <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="rounded-[28px] border border-white/10 bg-slate-950/40 p-6 shadow-[0_20px_60px_rgba(2,12,27,0.34)] backdrop-blur-xl">
           <div className="text-xl font-semibold text-white">Profile and workflow</div>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
-            <label className="rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-zinc-300">
-              <div className="text-xs uppercase tracking-[0.24em] text-zinc-500">Profile name</div>
-              <input value={settings.profileName} onChange={(event) => updateSettings({ ...settings, profileName: event.target.value })} className="mt-2 w-full bg-transparent text-white outline-none" />
-            </label>
             <label className="rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-zinc-300">
               <div className="text-xs uppercase tracking-[0.24em] text-zinc-500">Preferred currency</div>
               <input value={settings.preferredCurrency} onChange={(event) => updateSettings({ ...settings, preferredCurrency: event.target.value })} className="mt-2 w-full bg-transparent text-white outline-none" />
@@ -51,10 +48,6 @@ export default function SettingsPage() {
             <label className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-zinc-300">
               <span>Email alerts</span>
               <input type="checkbox" checked={settings.emailAlerts} onChange={() => updateSettings({ ...settings, emailAlerts: !settings.emailAlerts })} className="h-4 w-4 accent-sky-500" />
-            </label>
-            <label className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-zinc-300">
-              <span>Dark mode</span>
-              <input type="checkbox" checked={settings.darkMode} onChange={() => updateSettings({ ...settings, darkMode: !settings.darkMode })} className="h-4 w-4 accent-sky-500" />
             </label>
           </div>
           <label className="mt-4 block rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-zinc-300">

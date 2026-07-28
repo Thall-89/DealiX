@@ -1,13 +1,34 @@
 "use client";
 
-import { createContext, useContext } from "react";
+import { createContext, useContext, useMemo, useState } from "react";
 
-export type AuthIdentity = { userId: string; email: string; displayName: string };
+export type Theme = "dark" | "light";
+export type AuthIdentity = {
+  userId: string;
+  email: string;
+  username: string;
+  displayName: string;
+  avatarUrl: string | null;
+  bio: string | null;
+  theme: Theme;
+  hasLoggedInBefore: boolean;
+};
 
-const AuthIdentityContext = createContext<AuthIdentity | null>(null);
+type AuthIdentityContextValue = AuthIdentity & {
+  preferredName: string;
+  updateIdentity: (changes: Partial<Pick<AuthIdentity, "username" | "displayName" | "avatarUrl" | "bio" | "theme" | "hasLoggedInBefore">>) => void;
+};
+
+const AuthIdentityContext = createContext<AuthIdentityContextValue | null>(null);
 
 export function AuthIdentityProvider({ identity, children }: { identity: AuthIdentity; children: React.ReactNode }) {
-  return <AuthIdentityContext.Provider value={identity}>{children}</AuthIdentityContext.Provider>;
+  const [currentIdentity, setCurrentIdentity] = useState(identity);
+  const value = useMemo<AuthIdentityContextValue>(() => ({
+    ...currentIdentity,
+    preferredName: currentIdentity.username || currentIdentity.displayName || currentIdentity.email.split("@", 1)[0] || "there",
+    updateIdentity: (changes) => setCurrentIdentity((current) => ({ ...current, ...changes })),
+  }), [currentIdentity]);
+  return <AuthIdentityContext.Provider value={value}>{children}</AuthIdentityContext.Provider>;
 }
 
 export function useAuthIdentity() {

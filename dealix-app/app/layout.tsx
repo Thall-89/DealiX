@@ -30,9 +30,13 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-transparent">{children}</body>
+      <body className="min-h-full flex flex-col bg-transparent">
+        <script dangerouslySetInnerHTML={{ __html: `(() => { try { const saved = localStorage.getItem('dealix_theme'); const system = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'; const theme = saved === 'light' || saved === 'dark' ? saved : system; document.documentElement.dataset.theme = theme; document.documentElement.style.colorScheme = theme; } catch {} })()` }} />
+        {children}
+      </body>
     </html>
   );
 }

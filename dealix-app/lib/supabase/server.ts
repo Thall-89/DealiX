@@ -32,6 +32,18 @@ export async function getServerIdentity() {
   const user = await getServerUser();
   if (!user?.email) return null;
   const client = await createSupabaseServerClient();
-  const { data: profile } = client ? await client.from("profiles").select("display_name").eq("id", user.id).maybeSingle() : { data: null };
-  return { userId: user.id, email: user.email, displayName: profile?.display_name?.trim() || user.email };
+  const { data: profile } = client
+    ? await client.from("profiles").select("username, display_name, avatar_url, bio, theme, has_logged_in_before").eq("id", user.id).maybeSingle()
+    : { data: null };
+  const emailPrefix = user.email.split("@", 1)[0] || "there";
+  return {
+    userId: user.id,
+    email: user.email,
+    username: profile?.username?.trim() || emailPrefix,
+    displayName: profile?.display_name?.trim() || emailPrefix,
+    avatarUrl: profile?.avatar_url ?? null,
+    bio: profile?.bio ?? null,
+    theme: profile?.theme === "light" ? "light" as const : "dark" as const,
+    hasLoggedInBefore: profile?.has_logged_in_before === true,
+  };
 }

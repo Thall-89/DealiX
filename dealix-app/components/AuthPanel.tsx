@@ -1,34 +1,58 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { supabase, supabaseConfigured } from "@/lib/supabase/client";
 
 const credentialsSchema = z.object({ email: z.string().email().max(254), password: z.string().min(12).max(128) });
 
-function MailIcon() { return <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5 fill-none stroke-current stroke-[1.75]"><path d="M4 6h16v12H4zM4 7l8 6 8-6" strokeLinecap="round" strokeLinejoin="round" /></svg>; }
-function LockIcon() { return <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5 fill-none stroke-current stroke-[1.75]"><rect x="5" y="10" width="14" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" strokeLinecap="round" /></svg>; }
-function EyeIcon({ hidden }: { hidden: boolean }) { return <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5 fill-none stroke-current stroke-[1.75]"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" /><circle cx="12" cy="12" r="2.5" />{hidden ? <path d="M4 4l16 16" strokeLinecap="round" /> : null}</svg>; }
+function MailIcon() { return <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5 fill-none stroke-current stroke-[1.8]"><path d="M4 6h16v12H4zM4 7l8 6 8-6" strokeLinecap="round" strokeLinejoin="round" /></svg>; }
+function LockIcon() { return <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5 fill-none stroke-current stroke-[1.8]"><rect x="5" y="10" width="14" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" strokeLinecap="round" /></svg>; }
 
-export function AuthPanel() {
+export function AuthPanel({ mode = "signIn" }: { mode?: "signIn" | "signUp" }) {
   const router = useRouter();
-  const [email, setEmail] = useState(""); const [password, setPassword] = useState("");
-  const [status, setStatus] = useState(supabaseConfigured ? "Checking session..." : "Authentication is unavailable.");
-  const [showPassword, setShowPassword] = useState(false); const [isLoading, setIsLoading] = useState(false);
-  useEffect(() => { if (!supabase) return; supabase.auth.getUser().then(({ data }) => setStatus(data.user ? `Signed in as ${data.user.email}` : "")); }, []);
-  const act = async (kind: "signIn" | "signUp" | "reset") => {
-    if (!supabase) { setStatus("Supabase is not configured."); return; }
-    const valid = kind === "reset" ? z.string().email().max(254).safeParse(email).success : credentialsSchema.safeParse({ email, password }).success;
-    if (!valid) { setStatus(kind === "reset" ? "Enter a valid email address." : "Use a valid email and a password of at least 12 characters."); return; }
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [status, setStatus] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const signUp = mode === "signUp";
+
+  const submit = async () => {
+    const valid = credentialsSchema.safeParse({ email, password }).success;
+    if (!valid) { setStatus("Use a valid email and a password of at least 12 characters."); return; }
+    if (!supabase) { setStatus("Authentication is not configured for this deployment."); return; }
     setIsLoading(true);
-    try {
-      const outcome = kind === "signIn" ? await supabase.auth.signInWithPassword({ email, password }) : kind === "signUp" ? await supabase.auth.signUp({ email, password }) : await supabase.auth.resetPasswordForEmail(email);
-      if (outcome.error) { setStatus(outcome.error.message); return; }
-      if (kind === "signIn") { const { data: sessionData } = await supabase.auth.getSession(); await fetch("/api/security/auth-event", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${sessionData.session?.access_token ?? ""}` }, body: JSON.stringify({ event: "sign_in" }) }).catch(() => undefined); setStatus("Signed in."); router.replace("/"); router.refresh(); return; }
-      setStatus(kind === "reset" ? "Password reset email requested." : "Check your email to confirm your account.");
-    } finally { setIsLoading(false); }
+    setStatus("");
+    const emailPrefix = email.split("@", 1)[0]?.replace(/[^a-z0-9_]/gi, "").toLowerCase() || "user";
+    const outcome = signUp
+      ? await supabase.auth.signUp({ email, password, options: { data: { username: emailPrefix, display_name: emailPrefix } } })
+      : await supabase.auth.signInWithPassword({ email, password });
+    setIsLoading(false);
+    if (outcome.error) { setStatus(outcome.error.message); return; }
+    if (!signUp || outcome.data.session) { router.replace("/"); router.refresh(); return; }
+    setStatus("Account created. Check your email to confirm your account, then sign in.");
   };
-  const isError = /valid|error|failed|required|at least|configured/i.test(status); const isSuccess = /signed in|requested|check your email/i.test(status);
-  return <section aria-labelledby="auth-heading" className="w-full rounded-[22px] border border-white/[0.10] bg-slate-950/55 p-6 shadow-[0_24px_65px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:p-8"><div><p className="text-xs font-medium uppercase tracking-[0.16em] text-sky-300">DealiX workspace</p><h1 id="auth-heading" className="mt-3 text-3xl font-medium tracking-[-0.04em] text-white">Welcome back.</h1><p className="mt-2 text-sm leading-6 text-slate-400">Sign in to continue building a more informed flipping business.</p></div>{supabaseConfigured ? <div className="mt-8 space-y-5"><div><label htmlFor="email" className="mb-2 block text-sm font-medium text-slate-200">Email address</label><div className="group relative"><input id="email" value={email} onChange={(event) => setEmail(event.target.value)} type="email" autoComplete="email" placeholder="you@company.com" disabled={isLoading} className="h-12 w-full rounded-xl border border-white/[0.10] bg-white/[0.045] py-3 pr-4 pl-11 text-sm text-white outline-none transition placeholder:text-slate-600 hover:border-white/[0.16] focus:border-sky-400/65 focus:bg-sky-400/[0.045] focus:ring-4 focus:ring-sky-400/[0.10] disabled:cursor-not-allowed disabled:opacity-60" /><span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-500 transition group-focus-within:text-sky-300"><MailIcon /></span></div></div><div><div className="mb-2 flex items-center justify-between gap-4"><label htmlFor="password" className="text-sm font-medium text-slate-200">Password</label><button type="button" disabled={isLoading} onClick={() => act("reset")} className="text-xs font-medium text-sky-300 transition hover:text-sky-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d111c] disabled:opacity-60">Forgot password?</button></div><div className="group relative"><input id="password" value={password} onChange={(event) => setPassword(event.target.value)} type={showPassword ? "text" : "password"} autoComplete="current-password" placeholder="Enter your password" disabled={isLoading} className="h-12 w-full rounded-xl border border-white/[0.10] bg-white/[0.045] py-3 pr-12 pl-11 text-sm text-white outline-none transition placeholder:text-slate-600 hover:border-white/[0.16] focus:border-sky-400/65 focus:bg-sky-400/[0.045] focus:ring-4 focus:ring-sky-400/[0.10] disabled:cursor-not-allowed disabled:opacity-60" /><span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-500 transition group-focus-within:text-sky-300"><LockIcon /></span><button type="button" aria-label={showPassword ? "Hide password" : "Show password"} aria-pressed={showPassword} onClick={() => setShowPassword((value) => !value)} disabled={isLoading} className="absolute inset-y-0 right-0 grid w-11 place-items-center rounded-r-xl text-slate-500 transition hover:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-400/70 disabled:opacity-60"><EyeIcon hidden={showPassword} /></button></div></div><label className="flex cursor-pointer items-center gap-2.5 text-sm text-slate-400"><input type="checkbox" defaultChecked disabled={isLoading} className="h-4 w-4 rounded border-white/15 bg-white/5 text-sky-500 accent-sky-500 focus:ring-2 focus:ring-sky-400/50 focus:ring-offset-0 disabled:opacity-60" />Keep me signed in on this device</label><div aria-live="polite" className={`min-h-5 text-sm ${isError ? "text-rose-300" : isSuccess ? "text-emerald-300" : "text-slate-400"}`}>{status}</div><button type="button" disabled={isLoading} onClick={() => act("signIn")} className="flex h-12 w-full items-center justify-center rounded-xl bg-gradient-to-b from-sky-400 to-blue-600 px-4 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(37,99,235,0.30)] transition duration-200 hover:-translate-y-0.5 hover:from-sky-300 hover:to-blue-500 hover:shadow-[0_14px_30px_rgba(37,99,235,0.36)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d111c] disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-60">{isLoading ? "Please wait..." : "Sign in to DealiX"}</button><button type="button" disabled={isLoading} onClick={() => act("signUp")} className="flex h-11 w-full items-center justify-center rounded-xl border border-white/[0.12] bg-white/[0.025] px-4 text-sm font-medium text-slate-200 transition hover:border-white/[0.20] hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d111c] disabled:cursor-not-allowed disabled:opacity-60">Create an account</button>{status.startsWith("Signed in as") ? <button type="button" onClick={async () => { const { data } = await supabase?.auth.getSession() ?? { data: { session: null } }; if (data.session?.access_token) await fetch("/api/security/auth-event", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` }, body: JSON.stringify({ event: "sign_out" }) }).catch(() => undefined); await supabase?.auth.signOut(); router.replace("/login"); router.refresh(); }} className="mx-auto block text-xs text-slate-500 transition hover:text-slate-300">Sign out of this session</button> : null}</div> : <div className="mt-8 rounded-xl border border-rose-300/15 bg-rose-300/[0.06] p-4 text-sm leading-6 text-rose-100/85">Authentication is not configured for this deployment. Add the required Supabase environment variables before allowing access.</div>}</section>;
+
+  const resetPassword = async () => {
+    if (!z.string().email().safeParse(email).success || !supabase) { setStatus("Enter your email address first."); return; }
+    setIsLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    setIsLoading(false);
+    setStatus(error ? error.message : "Password reset email requested. Check your inbox.");
+  };
+
+  const isError = /valid|error|failed|required|at least|configured|incorrect|invalid/i.test(status);
+  return <section aria-labelledby="auth-heading" className="auth-panel w-full rounded-[22px] border border-white/[0.10] bg-slate-950/55 p-6 shadow-[0_24px_65px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:p-8">
+    <div><p className="text-xs font-medium uppercase tracking-[0.16em] text-sky-300">DealiX workspace</p><h1 id="auth-heading" className="mt-3 text-3xl font-medium tracking-[-0.04em] text-white">{signUp ? "Create your DealiX Workspace" : "Welcome back 👋"}</h1><p className="mt-2 text-sm leading-6 text-slate-400">{signUp ? "Build your AI-powered PC flipping business from one workspace." : "Sign in to continue building your PC flipping business."}</p></div>
+    {supabaseConfigured ? <div className="mt-8 space-y-5">
+      <div><label htmlFor="email" className="mb-2 block text-sm font-medium text-slate-200">Email address</label><div className="group relative"><input id="email" value={email} onChange={(event) => setEmail(event.target.value)} type="email" autoComplete="email" placeholder="you@company.com" disabled={isLoading} className="h-12 w-full rounded-xl border border-white/[0.10] bg-white/[0.045] py-3 pr-4 pl-11 text-sm text-white outline-none transition placeholder:text-slate-600 hover:border-white/[0.16] focus:border-sky-400/65 focus:bg-sky-400/[0.045] focus:ring-4 focus:ring-sky-400/[0.10] disabled:cursor-not-allowed disabled:opacity-60" /><span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-500 transition group-focus-within:text-sky-300"><MailIcon /></span></div></div>
+      <div><div className="mb-2 flex items-center justify-between gap-4"><label htmlFor="password" className="text-sm font-medium text-slate-200">Password</label>{!signUp ? <button type="button" disabled={isLoading} onClick={resetPassword} className="text-xs font-medium text-sky-300 transition hover:text-sky-200">Forgot password?</button> : null}</div><div className="group relative"><input id="password" value={password} onChange={(event) => setPassword(event.target.value)} type={showPassword ? "text" : "password"} autoComplete={signUp ? "new-password" : "current-password"} placeholder="At least 12 characters" disabled={isLoading} className="h-12 w-full rounded-xl border border-white/[0.10] bg-white/[0.045] py-3 pr-12 pl-11 text-sm text-white outline-none transition placeholder:text-slate-600 hover:border-white/[0.16] focus:border-sky-400/65 focus:bg-sky-400/[0.045] focus:ring-4 focus:ring-sky-400/[0.10] disabled:cursor-not-allowed disabled:opacity-60" /><span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-500 transition group-focus-within:text-sky-300"><LockIcon /></span><button type="button" aria-label={showPassword ? "Hide password" : "Show password"} aria-pressed={showPassword} onClick={() => setShowPassword((value) => !value)} disabled={isLoading} className="absolute inset-y-0 right-0 grid w-11 place-items-center rounded-r-xl text-slate-500 transition hover:text-slate-200">{showPassword ? "Hide" : "Show"}</button></div></div>
+      <div aria-live="polite" className={`min-h-5 text-sm ${isError ? "text-rose-300" : "text-emerald-300"}`}>{status}</div>
+      <button type="button" disabled={isLoading} onClick={submit} className="flex h-12 w-full items-center justify-center rounded-xl bg-gradient-to-b from-sky-400 to-blue-600 px-4 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(37,99,235,0.30)] transition duration-200 hover:-translate-y-0.5 hover:from-sky-300 hover:to-blue-500 hover:shadow-[0_14px_30px_rgba(37,99,235,0.36)] disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-60">{isLoading ? "Please wait…" : signUp ? "Create workspace" : "Sign in to DealiX"}</button>
+      <p className="text-center text-sm text-slate-400">{signUp ? "Already have an account?" : "New to DealiX?"} <Link href={signUp ? "/login" : "/signup"} className="font-medium text-sky-300 hover:text-sky-200">{signUp ? "Sign in" : "Create your workspace"}</Link></p>
+    </div> : <div className="mt-8 rounded-xl border border-rose-300/15 bg-rose-300/[0.06] p-4 text-sm leading-6 text-rose-100/85">Authentication is not configured for this deployment. Add the required Supabase environment variables before allowing access.</div>}
+  </section>;
 }
