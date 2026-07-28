@@ -1,6 +1,40 @@
 "use client";
+
 import type { DealiXData } from "@/lib/store";
 import { supabase, supabaseConfigured } from "@/lib/supabase/client";
 import type { DataRepository } from "@/lib/data/types";
 import type { Json } from "@/types/database";
-export const supabaseRepository: DataRepository = { mode: "supabase", configured: supabaseConfigured, async load() { if (!supabase) return null; const { data: auth } = await supabase.auth.getUser(); if (!auth.user) return null; const { data, error } = await supabase.from("app_settings").select("data").eq("user_id", auth.user.id).maybeSingle(); if (error) throw new Error("Could not load cloud data. Check Supabase setup and permissions."); return (data?.data as unknown as DealiXData | undefined) ?? null; }, async save(snapshot, expectedUserId) { if (!supabase) throw new Error("Supabase is not configured."); const { data: auth } = await supabase.auth.getUser(); if (!auth.user) throw new Error("Sign in before saving cloud data."); if (expectedUserId && auth.user.id !== expectedUserId) throw new Error("Account changed before the workspace could be saved."); const { error } = await supabase.from("app_settings").upsert({ user_id: auth.user.id, data: snapshot as unknown as Json }, { onConflict: "user_id" }); if (error) throw new Error("Cloud save failed. Your local data was not deleted."); }, async exportData() { return this.load(); } };
+
+export const supabaseRepository: DataRepository = {
+  mode: "supabase",
+  configured: supabaseConfigured,
+  async load() {
+    if (!supabase) return null;
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth.user) return null;
+
+    const { data, error } = await supabase
+      .from("app_settings")
+      .select("data")
+      .eq("user_id", auth.user.id)
+      .maybeSingle();
+    if (error) throw new Error("Could not load cloud data. Check Supabase setup and permissions.");
+    return (data?.data as unknown as DealiXData | undefined) ?? null;
+  },
+  async save(snapshot, expectedUserId) {
+    if (!supabase) throw new Error("Supabase is not configured.");
+    const { data: auth } = await supabase.auth.getUser();
+
+    // A delayed browser save can run after sign-out or an account switch.
+    // Treat it as cancelled: never write an anonymous or different account's data.
+    if (!auth.user || (expectedUserId && auth.user.id !== expectedUserId)) return;
+
+    const { error } = await supabase
+      .from("app_settings")
+      .upsert({ user_id: auth.user.id, data: snapshot as unknown as Json }, { onConflict: "user_id" });
+    if (error) throw new Error("Cloud save failed. Your local data was not deleted.");
+  },
+  async exportData() {
+    return this.load();
+  },
+};
