@@ -1,15 +1,30 @@
 'use client';
 
 import { useState } from "react";
+import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
 import { createDefaultTestingResult, dealixStore, useDealiXData } from "@/lib/store";
 import type { TestingResult } from "@/types";
 
 export default function TestingPage() {
   const snapshot = useDealiXData();
-  const [selectedBuildId, setSelectedBuildId] = useState(snapshot.builds.find((build) => build.status === "Active")?.id ?? snapshot.builds[0]!.id);
+  const [selectedBuildId, setSelectedBuildId] = useState(snapshot.builds.find((build) => build.status === "Active")?.id ?? snapshot.builds[0]?.id ?? "");
   const [saveMessage, setSaveMessage] = useState("");
-  const selectedBuild = snapshot.builds.find((build) => build.id === selectedBuildId) ?? snapshot.builds[0]!;
+  const selectedBuild = snapshot.builds.find((build) => build.id === selectedBuildId) ?? snapshot.builds[0];
+
+  if (!selectedBuild) {
+    return (
+      <div className="space-y-6">
+        <PageHeader eyebrow="Testing workflow" title="Testing" description="Record a build's hardware checks, temperatures, and benchmark results in one place." />
+        <section className="rounded-[28px] border border-dashed border-white/15 bg-white/5 p-8 text-center shadow-[0_20px_60px_rgba(2,12,27,0.2)]">
+          <h2 className="text-xl font-semibold text-white">Create a build before testing it</h2>
+          <p className="mx-auto mt-3 max-w-lg text-sm leading-7 text-zinc-400">Testing results are linked to a saved build, so your temperatures, checklist, and repair notes stay with the right PC.</p>
+          <Link href="/builds" className="mt-5 inline-flex rounded-full bg-sky-500 px-4 py-2 text-sm font-medium text-white transition duration-200 hover:-translate-y-0.5 hover:bg-sky-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300">Create a build</Link>
+        </section>
+      </div>
+    );
+  }
+
   const result = snapshot.testingResults[selectedBuild.id] ?? createDefaultTestingResult(selectedBuild.id);
 
   const saveResult = (next: TestingResult) => {

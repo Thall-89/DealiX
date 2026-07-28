@@ -1,65 +1,55 @@
 'use client';
 
-import { useMemo, useState } from "react";
+import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
-import { aiMessages } from "@/lib/mockData";
 
-const prompts = [
-  "What should I work on today?",
-  "Which build has the best projected return?",
-  "What information is missing?",
-  "Show my confirmed profit",
-  "Help me evaluate a deal",
+const workflows = [
+  {
+    title: "Evaluate opportunities",
+    description: "Recon ranks the saved targets in your workspace and explains the opportunity, risk, and compatibility signals it has recorded.",
+    href: "/deals",
+    action: "Open Recon",
+  },
+  {
+    title: "Plan a profitable build",
+    description: "Start with a component or an empty build, then use the Planner to compare compatible parts from inventory, Recon, and the catalog.",
+    href: "/planner",
+    action: "Open Planner",
+  },
+  {
+    title: "Prepare a listing",
+    description: "Open any build to create and save a clear marketplace listing draft from the information you have entered.",
+    href: "/builds",
+    action: "View builds",
+  },
 ];
-// This is a mock AI assistant page. It does not call a real AI API yet. The responses are hardcoded for demo purposes.
-const responseMap: Record<string, string> = {
-  "What should I work on today?": "Focus on Blue Titan pricing and the missing motherboard for Legacy Powerhouse.",
-  "Which build has the best projected return?": "Blue Titan has the strongest projected range right now, but the estimate is still a projection.",
-  "What information is missing?": "Final sale data for Legacy Powerhouse and the RTX 3070 location still need confirmation.",
-  "Show my confirmed profit": "Your confirmed profit is $244.50 from the completed sale.",
-  "Help me evaluate a deal": "Use the mock deal cards to compare price, fees, shipping, and risk before you buy.",
-};
 
 export default function AiPage() {
-  const [messages, setMessages] = useState(aiMessages);
-  const [input, setInput] = useState("");
-
-  const handlePrompt = (prompt: string) => {
-    setMessages((prev) => [...prev, { id: `${Date.now()}`, role: "user", content: prompt }, { id: `${Date.now()}-a`, role: "assistant", content: responseMap[prompt] ?? "Demo response ready." }]);
-  };
-
-  const assistantName = useMemo(() => "DealiX Assistant (Demo Mode)", []);
-
   return (
     <div className="space-y-6">
-      <PageHeader eyebrow="Demo Mode" title="AI Assistant" description="This assistant is a mock conversation experience for now. It does not call a real AI API yet." />
+      <PageHeader
+        eyebrow="Workflow intelligence"
+        title="AI Assistant"
+        description="DealiX keeps automated guidance inside the workflows where it can use your saved data. A general-purpose chat is not enabled for this beta."
+      />
 
-      <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-        <div className="rounded-[28px] border border-white/10 bg-slate-950/40 p-6 shadow-[0_20px_60px_rgba(2,12,27,0.34)] backdrop-blur-xl">
-          <div className="text-xl font-semibold text-white">Suggested prompts</div>
-          <div className="mt-4 space-y-2">
-            {prompts.map((prompt) => (
-              <button key={prompt} onClick={() => handlePrompt(prompt)} className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left text-sm text-zinc-200 transition hover:border-sky-400/30 hover:bg-sky-500/10">
-                <span>{prompt}</span>
-                <span className="text-sky-300">→</span>
-              </button>
-            ))}
-          </div>
+      <div className="rounded-[28px] border border-sky-400/20 bg-sky-500/10 p-6 shadow-[0_20px_60px_rgba(14,165,233,0.12)] backdrop-blur-xl sm:p-8">
+        <div className="max-w-2xl">
+          <div className="text-xl font-semibold text-white">Guidance that stays grounded in your workspace</div>
+          <p className="mt-3 text-sm leading-7 text-sky-100/80">
+            DealiX will never present a canned answer as live analysis. Use the tools below to work with the builds, inventory, and Recon targets that belong to your account.
+          </p>
         </div>
-
-        <div className="rounded-[28px] border border-purple-400/20 bg-purple-500/10 p-6 shadow-[0_20px_60px_rgba(147,51,234,0.16)] backdrop-blur-xl">
-          <div className="text-xl font-semibold text-white">{assistantName}</div>
-          <div className="mt-4 space-y-3">
-            {messages.map((message) => (
-              <div key={message.id} className={`rounded-2xl border px-4 py-3 text-sm leading-7 ${message.role === "assistant" ? "border-white/10 bg-slate-950/40 text-zinc-300" : "border-sky-400/20 bg-sky-500/10 text-zinc-100"}`}>
-                {message.content}
-              </div>
-            ))}
-          </div>
-          <div className="mt-4 flex gap-2">
-            <input value={input} onChange={(event) => setInput(event.target.value)} placeholder="Ask the assistant" className="flex-1 rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500" />
-            <button onClick={() => input.trim() && handlePrompt(input.trim())} className="rounded-full bg-sky-500 px-4 py-2 text-sm font-medium text-white">Send</button>
-          </div>
+        <div className="mt-6 grid gap-4 lg:grid-cols-3">
+          {workflows.map((workflow) => (
+            <div key={workflow.title} className="flex flex-col rounded-[24px] border border-white/10 bg-slate-950/40 p-5">
+              <h2 className="text-base font-semibold text-white">{workflow.title}</h2>
+              <p className="mt-2 flex-1 text-sm leading-6 text-zinc-400">{workflow.description}</p>
+              <Link href={workflow.href} className="mt-5 inline-flex w-fit items-center rounded-full border border-sky-400/30 bg-sky-500/10 px-4 py-2 text-sm font-medium text-sky-100 transition duration-200 hover:-translate-y-0.5 hover:bg-sky-500/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300">
+                {workflow.action}
+              </Link>
+            </div>
+          ))}
         </div>
       </div>
     </div>

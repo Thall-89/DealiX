@@ -21,7 +21,7 @@ export default function MotherboardFinderPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader eyebrow="Compatibility assistant" title="Find Compatible Motherboard" description="Legacy Powerhouse is blocked until a compatible motherboard is found. This assistant uses mock compatibility logic for now." />
+      <PageHeader eyebrow="Compatibility assistant" title="Find Compatible Motherboard" description="Legacy Powerhouse is blocked until a compatible motherboard is found. Recommendations use DealiX's local compatibility catalog; confirm the board's condition before purchase or installation." />
 
       <div className="rounded-[28px] border border-amber-400/20 bg-amber-500/10 p-4 text-sm text-amber-200">
         <div className="font-semibold">Legacy Powerhouse is blocked.</div>
@@ -77,7 +77,7 @@ export default function MotherboardFinderPage() {
                 <div className="mt-2 flex flex-wrap gap-2">
                   {item.notes.map((note) => <span key={note} className="rounded-full border border-white/10 px-2.5 py-1 text-xs">{note}</span>)}
                 </div>
-                {item.status.startsWith("Compatible") && legacyBuild ? <button onClick={() => { dealixStore.assignMockMotherboard(legacyBuild.id, item.name, item.summary); setSaveMessage(`${item.name} was assigned as a mock compatibility candidate. Confirm the real board condition before purchase or installation.`); }} className="mt-4 rounded-full border border-sky-400/30 px-3 py-2 text-sm text-sky-200">Assign to Legacy Powerhouse</button> : <button disabled className="mt-4 rounded-full border border-white/10 px-3 py-2 text-sm text-zinc-500">Not compatible</button>}
+                {item.status.startsWith("Compatible") && legacyBuild ? <button onClick={() => { dealixStore.assignMockMotherboard(legacyBuild.id, item.name, item.summary); setSaveMessage(`${item.name} was assigned as a compatible candidate. Confirm the real board condition before purchase or installation.`); }} className="mt-4 rounded-full border border-sky-400/30 px-3 py-2 text-sm text-sky-200">Assign to Legacy Powerhouse</button> : <button disabled className="mt-4 rounded-full border border-white/10 px-3 py-2 text-sm text-zinc-500">Not compatible</button>}
               </div>
             ))}
           </div>

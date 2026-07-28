@@ -62,7 +62,7 @@ export default function BuildDetailPage() {
       <PageHeader
         eyebrow="Build details"
         title={draft.name}
-        description="Edit this build, review the timeline, and keep the mock data fresh on this browser."
+        description="Edit this build, review its timeline, and keep its saved details accurate across your workspace."
         action={
           <div className="flex flex-wrap gap-2">
             <button onClick={() => setEditing(true)} className="rounded-full border border-white/10 px-4 py-2 text-sm text-zinc-300">Edit Build</button>
@@ -339,7 +339,7 @@ export default function BuildDetailPage() {
       <div className="rounded-[24px] border border-white/10 bg-slate-950/40 p-4 text-sm text-zinc-400">
         {saveMessage ? <div className="mb-2 font-medium text-emerald-300">{saveMessage}</div> : null}
         <div className="font-medium text-white">Current status</div>
-        <div className="mt-2">Estimated values are clearly labeled as estimates where they are still in the mock workflow.</div>
+        <div className="mt-2">Estimated values are clearly labeled as estimates until final sale details are recorded.</div>
         <div className="mt-2"><Link href="/builds" className="text-sky-300">Back to builds</Link></div>
       </div>
       <ConfirmDialog open={deleting} title={draft.status === "Sold" ? "Delete sold build?" : "Delete build?"} description={draft.status === "Sold" ? "This sold build contains financial history. Delete only if you are certain you no longer need that record." : "This removes the build and its linked tasks from this browser."} confirmLabel="Delete Build" danger onCancel={() => setDeleting(false)} onConfirm={() => { dealixStore.deleteBuild(draft.id); window.location.assign("/builds"); }} />
